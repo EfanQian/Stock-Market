@@ -6,6 +6,7 @@ import { ArrowLeft, Star, TrendingUp, TrendingDown, AlertCircle, CheckCircle } f
 import dynamic from 'next/dynamic';
 import { DEMO_STOCKS, DEMO_PRICES, formatPrice, formatPct, formatChange, formatCash, formatLargeNum, getRiskColor, type RiskLevel } from '@/lib/finnhub';
 import { loadPortfolio, executeBuy, executeSell, PortfolioState, savePortfolio } from '@/lib/store';
+import { usePrice, type LivePrice } from '@/lib/usePrices';
 
 const StockChart = dynamic(() => import('@/components/StockChart'), { ssr: false });
 
@@ -19,7 +20,8 @@ export default function StockPage({ params }: { params: Promise<{ symbol: string
   const sym = symbol.toUpperCase();
 
   const stock = DEMO_STOCKS.find(s => s.symbol === sym);
-  const price = DEMO_PRICES[sym] ?? { price: 100, change: 0, changePercent: 0 };
+  const livePrice = usePrice(sym);
+  const price: LivePrice = (livePrice ?? DEMO_PRICES[sym] ?? { symbol: sym, price: 100, change: 0, changePercent: 0 }) as LivePrice;
 
   const [portfolio, setPortfolio] = useState<PortfolioState | null>(null);
   const [side, setSide] = useState<Side>('buy');
@@ -270,10 +272,10 @@ export default function StockPage({ params }: { params: Promise<{ symbol: string
       {/* Stats bar */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: "Today's Open", value: formatPrice(price.price * 0.99) },
-          { label: "Day High", value: formatPrice(price.price * 1.008) },
-          { label: "Day Low", value: formatPrice(price.price * 0.992) },
-          { label: "Prev. Close", value: formatPrice(price.price - price.change) },
+          { label: "Today's Open", value: formatPrice(price.open ?? price.price * 0.99) },
+          { label: "Day High", value: formatPrice(price.high ?? price.price * 1.008) },
+          { label: "Day Low", value: formatPrice(price.low ?? price.price * 0.992) },
+          { label: "Prev. Close", value: formatPrice(price.prevClose ?? (price.price - price.change)) },
           { label: "52W High", value: formatPrice(price.price * 1.28) },
           { label: "52W Low", value: formatPrice(price.price * 0.72) },
         ].map(s => (

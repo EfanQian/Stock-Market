@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TrendingUp, TrendingDown, DollarSign, BarChart2, Zap, ArrowRight, Star } from 'lucide-react';
 import { DEMO_STOCKS, DEMO_PRICES, formatPrice, formatPct, formatCash } from '@/lib/finnhub';
 import { loadPortfolio, getTotalValue, getTotalReturn, getTotalReturnPct, PortfolioState } from '@/lib/store';
+import { usePrices } from '@/lib/usePrices';
 
 function StatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
@@ -65,25 +66,28 @@ function MoverRow({ symbol, name, price, changePercent }: {
 
 export default function Dashboard() {
   const [portfolio, setPortfolio] = useState<PortfolioState | null>(null);
+  const livePrices = usePrices(DEMO_STOCKS.map(s => s.symbol));
+  const getPrice = (sym: string) => livePrices[sym] ?? DEMO_PRICES[sym];
 
   useEffect(() => {
     const p = loadPortfolio();
     Object.keys(p.positions).forEach(sym => {
-      if (DEMO_PRICES[sym]) p.positions[sym].currentPrice = DEMO_PRICES[sym].price;
+      const lp = getPrice(sym);
+      if (lp) p.positions[sym].currentPrice = lp.price;
     });
     setPortfolio(p);
-  }, []);
+  }, [Object.keys(livePrices).length]);
 
   const totalValue = portfolio ? getTotalValue(portfolio) : 100000;
   const totalReturn = portfolio ? getTotalReturn(portfolio) : 0;
   const totalReturnPct = portfolio ? getTotalReturnPct(portfolio) : 0;
   const isUp = totalReturn >= 0;
 
-  const gainers = DEMO_STOCKS.filter(s => (DEMO_PRICES[s.symbol]?.changePercent ?? 0) > 0)
-    .sort((a, b) => DEMO_PRICES[b.symbol].changePercent - DEMO_PRICES[a.symbol].changePercent)
+  const gainers = DEMO_STOCKS.filter(s => (getPrice(s.symbol)?.changePercent ?? 0) > 0)
+    .sort((a, b) => (getPrice(b.symbol)?.changePercent ?? 0) - (getPrice(a.symbol)?.changePercent ?? 0))
     .slice(0, 5);
-  const losers = DEMO_STOCKS.filter(s => (DEMO_PRICES[s.symbol]?.changePercent ?? 0) < 0)
-    .sort((a, b) => DEMO_PRICES[a.symbol].changePercent - DEMO_PRICES[b.symbol].changePercent)
+  const losers = DEMO_STOCKS.filter(s => (getPrice(s.symbol)?.changePercent ?? 0) < 0)
+    .sort((a, b) => (getPrice(a.symbol)?.changePercent ?? 0) - (getPrice(b.symbol)?.changePercent ?? 0))
     .slice(0, 5);
 
   const positions = portfolio ? Object.values(portfolio.positions) : [];
@@ -132,7 +136,7 @@ export default function Dashboard() {
             </div>
             <Link href="/markets" style={{ fontSize: '0.75rem', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>See all <ArrowRight size={13} /></Link>
           </div>
-          {gainers.map(s => <MoverRow key={s.symbol} {...s} price={DEMO_PRICES[s.symbol].price} change={DEMO_PRICES[s.symbol].change} changePercent={DEMO_PRICES[s.symbol].changePercent} />)}
+          {gainers.map(s => { const p = getPrice(s.symbol); return p ? <MoverRow key={s.symbol} {...s} price={p.price} change={p.change} changePercent={p.changePercent} /> : null; })}
         </div>
 
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
@@ -143,7 +147,7 @@ export default function Dashboard() {
             </div>
             <Link href="/markets" style={{ fontSize: '0.75rem', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>See all <ArrowRight size={13} /></Link>
           </div>
-          {losers.map(s => <MoverRow key={s.symbol} {...s} price={DEMO_PRICES[s.symbol].price} change={DEMO_PRICES[s.symbol].change} changePercent={DEMO_PRICES[s.symbol].changePercent} />)}
+          {losers.map(s => { const p = getPrice(s.symbol); return p ? <MoverRow key={s.symbol} {...s} price={p.price} change={p.change} changePercent={p.changePercent} /> : null; })}
         </div>
       </div>
 
@@ -206,7 +210,7 @@ export default function Dashboard() {
           </div>
           {(portfolio?.watchlist ?? ['AAPL', 'NVDA', 'TSLA', 'MSFT']).map(sym => {
             const stock = DEMO_STOCKS.find(s => s.symbol === sym);
-            const price = DEMO_PRICES[sym];
+            const price = getPrice(sym);
             if (!stock || !price) return null;
             const up = price.changePercent >= 0;
             return (

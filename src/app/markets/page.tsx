@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Search, TrendingUp, TrendingDown, Filter } from 'lucide-react';
 import { DEMO_STOCKS, DEMO_PRICES, formatPrice, formatPct, formatChange, formatLargeNum, getRiskColor, type RiskLevel } from '@/lib/finnhub';
+import { usePrices } from '@/lib/usePrices';
 
 const SECTORS = ['All', 'Technology', 'Consumer Disc.', 'Financials', 'Healthcare', 'Energy', 'Communication', 'Utilities', 'ETF', 'Crypto'];
 
@@ -13,6 +14,9 @@ export default function MarketsPage() {
   const [sortBy, setSortBy] = useState<'symbol' | 'price' | 'change'>('change');
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
 
+  const livePrices = usePrices(DEMO_STOCKS.map(s => s.symbol));
+  const getPrice = (sym: string) => livePrices[sym] ?? DEMO_PRICES[sym];
+
   const filtered = DEMO_STOCKS.filter(s => {
     const q = query.toUpperCase();
     const matchesQuery = !q || s.symbol.includes(q) || s.name.toUpperCase().includes(q);
@@ -21,8 +25,8 @@ export default function MarketsPage() {
   }).sort((a, b) => {
     let av: number, bv: number;
     if (sortBy === 'symbol') return sortDir * a.symbol.localeCompare(b.symbol);
-    if (sortBy === 'price') { av = DEMO_PRICES[a.symbol]?.price ?? 0; bv = DEMO_PRICES[b.symbol]?.price ?? 0; }
-    else { av = DEMO_PRICES[a.symbol]?.changePercent ?? 0; bv = DEMO_PRICES[b.symbol]?.changePercent ?? 0; }
+    if (sortBy === 'price') { av = getPrice(a.symbol)?.price ?? 0; bv = getPrice(b.symbol)?.price ?? 0; }
+    else { av = getPrice(a.symbol)?.changePercent ?? 0; bv = getPrice(b.symbol)?.changePercent ?? 0; }
     return sortDir * (bv - av);
   });
 
@@ -76,7 +80,7 @@ export default function MarketsPage() {
         </div>
 
         {filtered.map((stock, i) => {
-          const price = DEMO_PRICES[stock.symbol];
+          const price = getPrice(stock.symbol);
           if (!price) return null;
           const isUp = price.changePercent >= 0;
           const riskColor = getRiskColor(stock.risk as RiskLevel);
