@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketSim Pro — Simulation Mode Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-brand-primary: #0A7C4E;
+    --color-brand-secondary: #0DBF76;
+    --color-brand-tertiary: #E8F8F1;
+    --color-positive: #00C853;
+    --color-positive-bg: #E8F5E9;
+    --color-negative: #D32F2F;
+    --color-negative-bg: #FFEBEE;
+    --color-neutral: #6B7280;
+    --color-bg-primary: #FFFFFF;
+    --color-bg-secondary: #F8FAFC;
+    --color-bg-tertiary: #F1F5F9;
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-tertiary: #94A3B8;
+    --color-border-primary: #E2E8F0;
+    --color-border-secondary: #CBD5E1;
+    --font-display: 'DM Sans', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+  }
+  [data-theme="dark"] {
+    --color-bg-primary: #0F172A;
+    --color-bg-secondary: #1E293B;
+    --color-bg-tertiary: #334155;
+    --color-text-primary: #F1F5F9;
+    --color-text-secondary: #94A3B8;
+    --color-text-tertiary: #475569;
+    --color-border-primary: #334155;
+    --color-border-secondary: #475569;
+    --color-brand-tertiary: #0F2D1F;
+    --color-positive-bg: #052E16;
+    --color-negative-bg: #450A0A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+  }
+
+  /* SCREEN SWITCHER */
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* TOP NAV */
+  .top-nav {
+    height: 64px;
+    background: var(--color-bg-primary);
+    border-bottom: 1px solid var(--color-border-primary);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--color-brand-primary);
+    margin-right: auto;
+  }
+  .nav-badge {
+    background: var(--color-brand-tertiary);
+    color: var(--color-brand-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--color-brand-secondary);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .nav-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--color-brand-tertiary);
+    color: var(--color-brand-primary);
+    font-weight: 700;
+    font-size: 0.875rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--color-brand-secondary);
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  .btn-primary:hover { background: #0AA668; }
+  .btn-primary.large { padding: 14px 28px; font-size: 1.125rem; }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--color-border-secondary);
+    color: var(--color-text-primary);
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  .btn-secondary:hover { background: var(--color-bg-tertiary); }
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  .btn-ghost:hover { background: var(--color-bg-tertiary); color: var(--color-text-primary); }
+  .btn-danger {
+    background: var(--color-negative);
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+  .btn-danger:hover { background: #B71C1C; }
+  .btn-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    background: var(--color-bg-tertiary);
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 150ms ease;
+  }
+  .btn-icon:hover { background: var(--color-border-secondary); color: var(--color-text-primary); }
+  .btn-icon.active { background: var(--color-brand-tertiary); color: var(--color-brand-primary); }
+
+  /* CARDS */
+  .card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ========================
+     SCREEN 1: SETUP
+  ======================== */
+  #screen-setup .content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+  .setup-card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    box-shadow: var(--shadow-lg);
+  }
+  .setup-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .setup-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .setup-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .setup-header p {
+    color: var(--color-text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .form-group { margin-bottom: 20px; }
+  .form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--color-text-primary);
+  }
+  .form-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    margin-top: 4px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    outline: none;
+    transition: all 150ms ease;
+  }
+  .form-input:focus {
+    border-color: var(--color-brand-primary);
+    box-shadow: 0 0 0 3px rgba(10,124,78,0.2);
+  }
+  .form-input.mono { font-family: var(--font-mono); }
+  .date-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .date-preset {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .date-preset:hover, .date-preset.active {
+    background: var(--color-brand-tertiary);
+    color: var(--color-brand-primary);
+  }
+  .setup-info-box {
+    background: var(--color-brand-tertiary);
+    border: 1px solid var(--color-brand-primary);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 0.875rem;
+    color: var(--color-brand-primary);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 80px;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-full);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    z-index: 200;
+  }
+
+  /* ========================
+     SCREEN 2: ACTIVE SIM
+  ======================== */
+  #screen-active {
+    background: var(--color-bg-primary);
+  }
+  .sim-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    flex: 1;
+  }
+
+  /* Time Control Bar */
+  .time-bar {
+    grid-column: 1 / -1;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-primary);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .sim-date-display {
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+  }
+  .sim-date-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+  }
+  .sim-date-value {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .time-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .play-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--color-brand-secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 150ms;
+    flex-shrink: 0;
+  }
+  .play-btn:hover { background: #0AA668; transform: scale(1.05); }
+  .speed-group {
+    display: flex;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+  }
+  .speed-btn {
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    background: transparent;
+    transition: all 150ms;
+  }
+  .speed-btn:hover { color: var(--color-text-primary); }
+  .speed-btn.active {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .progress-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--color-brand-secondary);
+    border-radius: var(--radius-full);
+    width: 42%;
+    transition: width 0.5s ease;
+  }
+  .progress-marker {
+    position: absolute;
+    top: 50%;
+    left: 42%;
+    transform: translate(-50%, -50%);
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--color-brand-secondary);
+    border: 2px solid var(--color-bg-primary);
+    box-shadow: var(--shadow-md);
+  }
+  .day-counter {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+  .jump-btn {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-secondary);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--font-body);
+    transition: all 150ms;
+  }
+  .jump-btn:hover { background: var(--color-border-secondary); color: var(--color-text-primary); }
+  .end-sim-btn {
+    background: transparent;
+    border: 1px solid var(--color-negative);
+    color: var(--color-negative);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--font-body);
+    transition: all 150ms;
+  }
+  .end-sim-btn:hover { background: var(--color-negative); color: white; }
+
+  /* Main panel */
+  .sim-main {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Stock header */
+  .stock-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .stock-logo {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-md);
+    background: #000;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  .stock-info h2 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .stock-info p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+  .stock-price-group {
+    margin-left: auto;
+    text-align: right;
+  }
+  .stock-price {
+    font-family: var(--font-mono);
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  .stock-change {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-positive);
+  }
+  .stock-change.neg { color: var(--color-negative); }
+
+  /* Chart area */
+  .chart-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+  }
+  .chart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .chart-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: auto;
+  }
+  .chart-range-btn {
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .chart-range-btn.active {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+  }
+  .chart-range-btn:hover { color: var(--color-text-primary); }
+
+  /* SVG chart mockup */
+  .chart-svg-wrap {
+    width: 100%;
+    height: 220px;
+    position: relative;
+  }
+  .chart-svg-wrap svg {
+    width: 100%;
+    height: 100%;
+  }
+  .chart-note {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .chart-note .dot-green { width: 6px; height: 6px; border-radius: 50%; background: var(--color-positive); display: inline-block; }
+  .chart-note .dot-grey { width: 6px; height: 6px; border-radius: 50%; background: var(--color-text-tertiary); display: inline-block; }
+
+  /* Side panel */
+  .sim-sidebar {
+    border-left: 1px solid var(--color-border-primary);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Portfolio panel */
+  .portfolio-panel {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border-primary);
+    background: var(--color-bg-secondary);
+  }
+  .panel-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 12px;
+  }
+  .portfolio-value {
+    font-family: var(--font-mono);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .portfolio-return {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-positive);
+    margin-bottom: 12px;
+  }
+  .portfolio-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-box {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+  }
+  .stat-box-label {
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    margin-bottom: 2px;
+  }
+  .stat-box-value {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .stat-box-value.pos { color: var(--color-positive); }
+  .stat-box-value.neg { color: var(--color-negative); }
+
+  /* Trade panel */
+  .trade-panel {
+    padding: 16px;
+    flex: 1;
+  }
+  .buy-sell-toggle {
+    display: flex;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+    margin-bottom: 16px;
+  }
+  .buy-sell-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 150ms;
+    font-family: var(--font-body);
+    color: var(--color-text-secondary);
+    background: transparent;
+  }
+  .buy-sell-btn.buy.active {
+    background: var(--color-bg-primary);
+    color: var(--color-positive);
+    box-shadow: var(--shadow-sm);
+  }
+  .buy-sell-btn.sell.active {
+    background: var(--color-bg-primary);
+    color: var(--color-negative);
+    box-shadow: var(--shadow-sm);
+  }
+  .order-type-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .order-type-chip {
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border-primary);
+    background: transparent;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    transition: all 150ms;
+    font-family: var(--font-body);
+  }
+  .order-type-chip.active {
+    border-color: var(--color-brand-primary);
+    background: var(--color-brand-tertiary);
+    color: var(--color-brand-primary);
+  }
+  .trade-form-group { margin-bottom: 12px; }
+  .trade-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: 5px;
+  }
+  .trade-input {
+    width: 100%;
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    outline: none;
+    transition: all 150ms;
+  }
+  .trade-input:focus {
+    border-color: var(--color-brand-primary);
+    box-shadow: 0 0 0 3px rgba(10,124,78,0.2);
+  }
+  .order-summary {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .order-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    padding: 3px 0;
+  }
+  .order-summary-row .key { color: var(--color-text-secondary); }
+  .order-summary-row .val { font-family: var(--font-mono); font-weight: 600; }
+  .order-summary-row.total .val { color: var(--color-brand-secondary); font-size: 0.9375rem; }
+  .confirm-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--color-positive);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .confirm-btn:hover { background: #00a844; }
+  .market-note {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    margin-top: 8px;
+  }
+
+  /* Holdings */
+  .holdings-section {
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border-primary);
+  }
+  .holdings-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 10px;
+  }
+  .holding-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border-primary);
+  }
+  .holding-row:last-child { border-bottom: none; }
+  .holding-ticker {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+  .holding-shares {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+  }
+  .holding-value {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .holding-pl {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* ========================
+     SCREEN 3: RESULTS
+  ======================== */
+  #screen-results .content {
+    flex: 1;
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .results-wrap {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .results-header {
+    text-align: center;
+    padding: 32px;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+  .results-icon { font-size: 56px; margin-bottom: 12px; }
+  .results-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .results-header p { color: var(--color-text-secondary); font-size: 0.9375rem; }
+  .results-big-number {
+    font-family: var(--font-mono);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--color-positive);
+    margin: 8px 0;
+  }
+  .results-big-number.neg { color: var(--color-negative); }
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .result-stat-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+  }
+  .result-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 6px;
+  }
+  .result-stat-value {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .result-stat-value.pos { color: var(--color-positive); }
+  .result-stat-value.neg { color: var(--color-negative); }
+  .result-stat-sub {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+  .vs-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+  }
+  .vs-card h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    margin-bottom: 16px;
+  }
+  .vs-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .vs-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .vs-bar-track {
+    flex: 1;
+    height: 20px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+  }
+  .vs-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+  }
+  .vs-bar-fill.you { background: var(--color-positive); width: 68%; }
+  .vs-bar-fill.sp { background: var(--color-text-tertiary); width: 28%; }
+  .result-winner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-positive-bg);
+    color: var(--color-positive);
+    border-radius: var(--radius-full);
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+  .trades-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .trades-card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-secondary);
+  }
+  .trade-row {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--color-border-primary);
+    align-items: center;
+    font-size: 0.875rem;
+  }
+  .trade-row:last-child { border-bottom: none; }
+  .trade-type-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+  .trade-type-badge.buy { background: var(--color-positive-bg); color: var(--color-positive); }
+  .trade-type-badge.sell { background: var(--color-negative-bg); color: var(--color-negative); }
+  .results-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Utility */
+  .text-pos { color: var(--color-positive); }
+  .text-neg { color: var(--color-negative); }
+  .mono { font-family: var(--font-mono); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .badge-sim { background: rgba(13,191,118,0.15); color: var(--color-brand-secondary); border: 1px solid rgba(13,191,118,0.3); }
+
+  /* Screen nav buttons for demo */
+  .demo-nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    padding: 8px;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-lg);
+    z-index: 300;
+  }
+  .demo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--color-border-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all 150ms;
+    padding: 0;
+  }
+  .demo-dot.active { background: var(--color-brand-secondary); transform: scale(1.3); }
+  .demo-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    padding: 2px 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+
+<!-- DEMO NAV -->
+<div class="demo-nav">
+  <span class="demo-label">Screen:</span>
+  <button class="demo-dot active" id="dot-0" onclick="showScreen(0)" title="Setup"></button>
+  <button class="demo-dot" id="dot-1" onclick="showScreen(1)" title="Active Simulation"></button>
+  <button class="demo-dot" id="dot-2" onclick="showScreen(2)" title="Results"></button>
+</div>
+
+<!-- ======================== SCREEN 1: SETUP ======================== -->
+<div class="screen active" id="screen-setup">
+  <nav class="top-nav">
+    <div class="nav-logo">MarketSim Pro</div>
+    <span class="badge badge-sim">SIMULATION MODE</span>
+    <div class="nav-avatar">E</div>
+  </nav>
+  <div class="content">
+    <div class="setup-card">
+      <div class="setup-header">
+        <div class="setup-icon">⏳</div>
+        <h1>Set Up Your Simulation</h1>
+        <p>Travel back in time and trade with real historical prices. Your simulation portfolio is completely separate from your live account.</p>
+      </div>
+
+      <div class="setup-info-box">
+        ℹ️ You'll start with virtual cash and trade at each day's real opening price. At the end, see how you did vs. the S&P 500.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-input mono" value="2024-01-01">
+        <div class="date-presets">
+          <button class="date-preset">1 month ago</button>
+          <button class="date-preset active">Jan 2024</button>
+          <button class="date-preset">COVID Crash (Mar 2020)</button>
+          <button class="date-preset">Jan 2023</button>
+        </div>
+        <div class="form-hint">The simulation runs from your start date to 1 month later using real daily prices.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Starting Cash</label>
+        <input type="number" class="form-input mono" value="100000" min="1000" max="10000000" step="1000">
+        <div class="form-hint">Between $1,000 and $10,000,000 in virtual USD.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Playback Speed</label>
+        <div class="speed-group" style="width:fit-content;">
+          <button class="speed-btn active">1×</button>
+          <button class="speed-btn">10×</button>
+          <button class="speed-btn">100×</button>
+        </div>
+        <div class="form-hint">1× = one simulated day per real second. 100× = very fast. You can change this during the simulation.</div>
+      </div>
+
+      <button class="btn btn-primary large" style="width:100%;justify-content:center;" onclick="showScreen(1)">
+        ▶ Start Simulation
+      </button>
+      <div style="text-align:center;margin-top:12px;">
+        <a href="#" class="btn btn-ghost" style="color:var(--color-text-tertiary);font-size:0.8rem;">← Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SCREEN 2: ACTIVE SIM ======================== -->
+<div class="screen" id="screen-active">
+  <nav class="top-nav">
+    <div class="nav-logo">MarketSim Pro</div>
+    <span class="badge badge-sim" style="animation: pulse 2s infinite;">⏳ SIMULATION ACTIVE</span>
+    <div style="margin-left:auto;font-family:var(--font-mono);font-size:0.875rem;color:var(--color-text-secondary);">
+      Sim Cash: <strong style="color:var(--color-text-primary);">$61,230.00</strong>
+    </div>
+    <div class="nav-avatar">E</div>
+  </nav>
+
+  <!-- Time Control Bar -->
+  <div class="time-bar">
+    <div class="sim-date-display">
+      <span class="sim-date-label">Simulated Date</span>
+      <span class="sim-date-value">Jan 14, 2024</span>
+    </div>
+
+    <div class="time-controls">
+      <button class="play-btn" id="play-btn" onclick="togglePlay()">⏸</button>
+      <div class="speed-group">
+        <button class="speed-btn" onclick="setSpeed(this)">1×</button>
+        <button class="speed-btn active" onclick="setSpeed(this)">10×</button>
+        <button class="speed-btn" onclick="setSpeed(this)">100×</button>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-labels">
+        <span>Jan 1, 2024</span>
+        <span>Jan 31, 2024</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+        <div class="progress-marker" id="progress-marker"></div>
+      </div>
+    </div>
+
+    <span class="day-counter" id="day-counter">Day 14 of 31</span>
+    <button class="jump-btn" onclick="jumpToEnd()">Jump to End ⏭</button>
+    <button class="end-sim-btn" onclick="showScreen(2)">End Simulation</button>
+  </div>
+
+  <!-- Main layout -->
+  <div class="sim-layout" style="flex:1;overflow:hidden;">
+
+    <!-- Main content -->
+    <div class="sim-main">
+
+      <!-- Stock header -->
+      <div class="stock-header">
+        <div class="stock-logo" style="background:#000;font-size:0.7rem;">AAPL</div>
+        <div class="stock-info">
+          <h2>Apple Inc.</h2>
+          <p>NASDAQ · Technology · Jan 14, 2024 Open</p>
+        </div>
+        <div class="stock-price-group">
+          <div class="stock-price">$185.92</div>
+          <div class="stock-change">+$2.14 (+1.16%) today</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-card">
+        <div class="chart-toolbar">
+          <span class="chart-label">AAPL — Jan 2024</span>
+          <button class="chart-range-btn active">1M</button>
+          <button class="chart-range-btn">ALL</button>
+        </div>
+        <div class="chart-svg-wrap">
+          <!-- Simple SVG mockup of a stock chart -->
+          <svg viewBox="0 0 800 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00C853" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#00C853" stop-opacity="0.02"/>
+              </linearGradient>
+              <linearGradient id="spGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#94A3B8" stop-opacity="0.1"/>
+                <stop offset="100%" stop-color="#94A3B8" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid lines -->
+            <line x1="0" y1="50" x2="800" y2="50" stroke="var(--color-border-primary)" stroke-width="0.5"/>
+            <line x1="0" y1="100" x2="800" y2="100" stroke="var(--color-border-primary)" stroke-width="0.5"/>
+            <line x1="0" y1="150" x2="800" y2="150" stroke="var(--color-border-primary)" stroke-width="0.5"/>
+            <!-- S&P 500 area (grey, behind) -->
+            <path d="M0,130 C40,125 80,120 120,118 C160,116 200,115 240,110 C280,105 320,112 360,108 C400,104 440,100 480,95 C520,90 560,88 600,85 C640,82 680,78 720,75 L720,200 L0,200 Z" fill="url(#spGrad)"/>
+            <path d="M0,130 C40,125 80,120 120,118 C160,116 200,115 240,110 C280,105 320,112 360,108 C400,104 440,100 480,95 C520,90 560,88 600,85 C640,82 680,78 720,75" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <!-- AAPL area (green) -->
+            <path d="M0,150 C30,145 60,138 100,130 C140,122 180,128 220,115 C260,102 300,95 340,88 C380,80 420,85 460,75 C500,65 540,60 580,52 C620,44 660,48 700,40 C720,36 740,35 760,32 L760,200 L0,200 Z" fill="url(#chartGrad)"/>
+            <path d="M0,150 C30,145 60,138 100,130 C140,122 180,128 220,115 C260,102 300,95 340,88 C380,80 420,85 460,75 C500,65 540,60 580,52 C620,44 660,48 700,40 C720,36 740,35 760,32" fill="none" stroke="#00C853" stroke-width="2"/>
+            <!-- Current day marker (vertical line at ~42%) -->
+            <line x1="330" y1="0" x2="330" y2="200" stroke="var(--color-brand-secondary)" stroke-width="1.5" stroke-dasharray="3,3"/>
+            <circle cx="330" cy="88" r="5" fill="var(--color-brand-secondary)" stroke="var(--color-bg-primary)" stroke-width="2"/>
+            <!-- Buy marker -->
+            <circle cx="100" cy="130" r="6" fill="var(--color-positive)" stroke="var(--color-bg-primary)" stroke-width="2"/>
+            <text x="100" y="148" text-anchor="middle" fill="var(--color-positive)" font-size="9" font-family="var(--font-mono)">BUY</text>
+          </svg>
+          <div class="chart-note">
+            <span class="dot-green"></span> AAPL &nbsp;
+            <span class="dot-grey"></span> S&P 500
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's data row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div class="card" style="padding:14px;text-align:center;">
+          <div style="font-size:0.7rem;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Open</div>
+          <div class="mono" style="font-weight:700;">$183.78</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+          <div style="font-size:0.7rem;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">High</div>
+          <div class="mono" style="font-weight:700;color:var(--color-positive);">$186.40</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+          <div style="font-size:0.7rem;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Low</div>
+          <div class="mono" style="font-weight:700;color:var(--color-negative);">$183.20</div>
+        </div>
+        <div class="card" style="padding:14px;text-align:center;">
+          <div style="font-size:0.7rem;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Close</div>
+          <div class="mono" style="font-weight:700;">$185.92</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right sidebar -->
+    <div class="sim-sidebar">
+
+      <!-- Portfolio summary -->
+      <div class="portfolio-panel">
+        <div class="panel-label">Simulation Portfolio</div>
+        <div class="portfolio-value">$107,240.00</div>
+        <div class="portfolio-return">+$7,240.00 (+7.24%) ▲</div>
+        <div class="portfolio-stats">
+          <div class="stat-box">
+            <div class="stat-box-label">Cash</div>
+            <div class="stat-box-value mono">$61,230.00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-label">Invested</div>
+            <div class="stat-box-value mono">$46,010.00</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-label">Today's P&L</div>
+            <div class="stat-box-value pos mono">+$534.20</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-label">vs S&P 500</div>
+            <div class="stat-box-value pos mono">+4.81%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade panel -->
+      <div class="trade-panel">
+        <div class="panel-label">Place Order — AAPL</div>
+        <div class="buy-sell-toggle">
+          <button class="buy-sell-btn buy active">Buy</button>
+          <button class="buy-sell-btn sell">Sell</button>
+        </div>
+        <div class="order-type-row">
+          <button class="order-type-chip active">Market</button>
+          <button class="order-type-chip">Limit</button>
+          <button class="order-type-chip">Stop-Loss</button>
+        </div>
+        <div class="trade-form-group">
+          <div class="trade-label">
+            <span>Shares</span>
+            <span style="color:var(--color-text-tertiary);">Max: 329 shares</span>
+          </div>
+          <input type="number" class="trade-input" value="50" min="1">
+        </div>
+        <div class="trade-form-group">
+          <div class="trade-label"><span>Price per Share</span></div>
+          <input type="text" class="trade-input" value="$185.92 (Market)" readonly style="color:var(--color-text-secondary);">
+        </div>
+        <div class="order-summary">
+          <div class="order-summary-row">
+            <span class="key">50 × $185.92</span>
+            <span class="val">$9,296.00</span>
+          </div>
+          <div class="order-summary-row">
+            <span class="key">Commission</span>
+            <span class="val">$0.00</span>
+          </div>
+          <div style="border-top:1px solid var(--color-border-primary);margin:6px 0;"></div>
+          <div class="order-summary-row total">
+            <span class="key" style="font-weight:700;">Total Cost</span>
+            <span class="val">$9,296.00</span>
+          </div>
+        </div>
+        <button class="confirm-btn" onclick="alert('Order placed! Bought 50 shares of AAPL at $185.92')">
+          Buy 50 Shares of AAPL
+        </button>
+        <div class="market-note">Executes at Jan 14 open price · No real money involved</div>
+      </div>
+
+      <!-- Holdings -->
+      <div class="holdings-section">
+        <div class="holdings-title">Current Positions</div>
+        <div class="holding-row">
+          <div>
+            <div class="holding-ticker">NVDA</div>
+            <div class="holding-shares">10 shares</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="holding-value mono">$6,140.00</div>
+            <div class="holding-pl text-pos mono">+18.2%</div>
+          </div>
+        </div>
+        <div class="holding-row">
+          <div>
+            <div class="holding-ticker">MSFT</div>
+            <div class="holding-shares">25 shares</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="holding-value mono">$10,250.00</div>
+            <div class="holding-pl text-pos mono">+9.4%</div>
+          </div>
+        </div>
+        <div class="holding-row">
+          <div>
+            <div class="holding-ticker">META</div>
+            <div class="holding-shares">15 shares</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="holding-value mono">$7,620.00</div>
+            <div class="holding-pl text-neg mono">-2.1%</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======================== SCREEN 3: RESULTS ======================== -->
+<div class="screen" id="screen-results">
+  <nav class="top-nav">
+    <div class="nav-logo">MarketSim Pro</div>
+    <span class="badge badge-sim">SIMULATION COMPLETE</span>
+    <div class="nav-avatar">E</div>
+  </nav>
+
+  <div class="content">
+    <div class="results-wrap">
+
+      <!-- Hero result -->
+      <div class="results-header">
+        <div class="results-icon">🏆</div>
+        <h1>Simulation Complete — January 2024</h1>
+        <p>You beat the market by <strong style="color:var(--color-positive);">4.81%</strong> over 31 trading days</p>
+        <div class="results-big-number">+$14,380.00</div>
+        <div style="font-family:var(--font-mono);font-size:1.1rem;color:var(--color-positive);margin-bottom:8px;">
+          +14.38% total return
+        </div>
+        <div style="font-size:0.875rem;color:var(--color-text-secondary);">
+          Started with $100,000 · Ended with $114,380
+        </div>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="results-grid">
+        <div class="result-stat-card">
+          <div class="result-stat-label">Final Portfolio Value</div>
+          <div class="result-stat-value pos">$114,380</div>
+          <div class="result-stat-sub">+14.38% from $100,000</div>
+        </div>
+        <div class="result-stat-card">
+          <div class="result-stat-label">Best Single Day</div>
+          <div class="result-stat-value pos">+$3,210</div>
+          <div class="result-stat-sub">Jan 22 · NVDA earnings</div>
+        </div>
+        <div class="result-stat-card">
+          <div class="result-stat-label">Trades Made</div>
+          <div class="result-stat-value" style="color:var(--color-text-primary);">12</div>
+          <div class="result-stat-sub">8 buys · 4 sells</div>
+        </div>
+        <div class="result-stat-card">
+          <div class="result-stat-label">Worst Single Day</div>
+          <div class="result-stat-value neg">-$1,840</div>
+          <div class="result-stat-sub">Jan 19 · Market dip</div>
+        </div>
+      </div>
+
+      <!-- vs S&P 500 comparison -->
+      <div class="vs-card">
+        <h3>Your Return vs S&P 500 — January 2024</h3>
+        <div class="vs-row">
+          <span class="vs-label">Your Portfolio</span>
+          <div class="vs-bar-track">
+            <div class="vs-bar-fill you">+14.38%</div>
+          </div>
+        </div>
+        <div class="vs-row">
+          <span class="vs-label" style="color:var(--color-text-secondary);">S&P 500</span>
+          <div class="vs-bar-track">
+            <div class="vs-bar-fill sp">+9.57%</div>
+          </div>
+        </div>
+        <div>
+          <span class="result-winner-badge">✓ You beat the market by +4.81%</span>
+        </div>
+      </div>
+
+      <!-- Trade log -->
+      <div class="trades-card">
+        <div class="trades-card-header">Trade History</div>
+        <div class="trade-row" style="background:var(--color-bg-secondary);font-size:0.7rem;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.05em;">
+          <span>Type</span><span>Date</span><span>Stock</span><span>Shares</span><span>Price</span>
+        </div>
+        <div class="trade-row">
+          <span class="trade-type-badge buy">BUY</span>
+          <span style="color:var(--color-text-secondary);font-size:0.8rem;">Jan 2</span>
+          <span class="mono" style="font-weight:700;">NVDA</span>
+          <span class="mono">10</span>
+          <span class="mono">$495.20</span>
+        </div>
+        <div class="trade-row">
+          <span class="trade-type-badge buy">BUY</span>
+          <span style="color:var(--color-text-secondary);font-size:0.8rem;">Jan 3</span>
+          <span class="mono" style="font-weight:700;">MSFT</span>
+          <span class="mono">25</span>
+          <span class="mono">$374.00</span>
+        </div>
+        <div class="trade-row">
+          <span class="trade-type-badge buy">BUY</span>
+          <span style="color:var(--color-text-secondary);font-size:0.8rem;">Jan 5</span>
+          <span class="mono" style="font-weight:700;">META</span>
+          <span class="mono">15</span>
+          <span class="mono">$353.96</span>
+        </div>
+        <div class="trade-row">
+          <span class="trade-type-badge sell">SELL</span>
+          <span style="color:var(--color-text-secondary);font-size:0.8rem;">Jan 18</span>
+          <span class="mono" style="font-weight:700;">META</span>
+          <span class="mono">15</span>
+          <span class="mono">$346.28</span>
+        </div>
+        <div class="trade-row" style="color:var(--color-text-tertiary);font-size:0.8rem;justify-content:center;grid-column:1/-1;">
+          + 8 more trades
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="results-actions">
+        <button class="btn btn-primary" onclick="showScreen(0)">Run Another Simulation</button>
+        <button class="btn btn-secondary">Share Results</button>
+        <button class="btn btn-secondary" onclick="alert('Dashboard coming soon in this mockup!')">Back to Dashboard</button>
+      </div>
+
+      <div style="height:60px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentScreen = 0;
+  let isPlaying = true;
+  let currentDay = 14;
+  let simInterval = null;
+
+  function showScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.demo-dot').forEach(d => d.classList.remove('active'));
+    document.getElementById(['screen-setup','screen-active','screen-results'][n]).classList.add('active');
+    document.getElementById('dot-' + n).classList.add('active');
+    currentScreen = n;
+    if (n === 1) startSimTick();
+    else stopSimTick();
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    document.getElementById('play-btn').textContent = isPlaying ? '⏸' : '▶';
+    if (isPlaying) startSimTick(); else stopSimTick();
+  }
+
+  function setSpeed(btn) {
+    document.querySelectorAll('#screen-active .speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function startSimTick() {
+    stopSimTick();
+    simInterval = setInterval(() => {
+      if (!isPlaying) return;
+      if (currentDay < 31) {
+        currentDay++;
+        updateDayDisplay();
+      } else {
+        stopSimTick();
+      }
+    }, 1200);
+  }
+
+  function stopSimTick() {
+    if (simInterval) { clearInterval(simInterval); simInterval = null; }
+  }
+
+  function updateDayDisplay() {
+    const days = ['Jan 1','Jan 2','Jan 3','Jan 4','Jan 5','Jan 8','Jan 9','Jan 10','Jan 11','Jan 12','Jan 16','Jan 17','Jan 18','Jan 19','Jan 22','Jan 23','Jan 24','Jan 25','Jan 26','Jan 29','Jan 30','Jan 31'];
+    const idx = Math.min(currentDay - 1, days.length - 1);
+    const dateEl = document.querySelector('#screen-active .sim-date-value');
+    if (dateEl) dateEl.textContent = (days[idx] || 'Jan ' + currentDay) + ', 2024';
+    const pct = (currentDay / 31) * 100;
+    const fill = document.getElementById('progress-fill');
+    const marker = document.getElementById('progress-marker');
+    const counter = document.getElementById('day-counter');
+    if (fill) fill.style.width = pct + '%';
+    if (marker) marker.style.left = pct + '%';
+    if (counter) counter.textContent = 'Day ' + currentDay + ' of 31';
+  }
+
+  function jumpToEnd() {
+    stopSimTick();
+    currentDay = 31;
+    updateDayDisplay();
+    setTimeout(() => showScreen(2), 600);
+  }
+
+  // Buy/Sell toggle
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('buy-sell-btn')) {
+      document.querySelectorAll('.buy-sell-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      const confirmBtn = document.querySelector('.confirm-btn');
+      if (e.target.classList.contains('buy')) {
+        confirmBtn.style.background = 'var(--color-positive)';
+        confirmBtn.textContent = 'Buy 50 Shares of AAPL';
+      } else {
+        confirmBtn.style.background = 'var(--color-negative)';
+        confirmBtn.textContent = 'Sell 50 Shares of AAPL';
+      }
+    }
+    if (e.target.classList.contains('order-type-chip')) {
+      document.querySelectorAll('.order-type-chip').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+    if (e.target.classList.contains('date-preset')) {
+      document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+    if (e.target.classList.contains('speed-btn') && e.target.closest('#screen-setup')) {
+      e.target.closest('.speed-group').querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+  });
+</script>
+</body>
+</html>
