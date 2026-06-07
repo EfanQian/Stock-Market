@@ -74,6 +74,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
 
   useEffect(() => {
     if (!containerRef.current) return;
+    let cancelled = false;
     const container = containerRef.current;
 
     const chart = createChart(container, {
@@ -123,6 +124,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
         const json = await res.json() as { bars: Bar[]; demo?: boolean };
         if (json.bars && json.bars.length > 0) { bars = json.bars; isDemoRef.current = !!json.demo; }
       } catch { /* fall through */ }
+      if (cancelled) return; // chart was removed while fetch was in-flight
       if (bars.length === 0) { bars = generateBars(basePrice, numDays, isUp); isDemoRef.current = true; }
       barsRef.current = bars;
       applyBarsToChart(chart, bars);
@@ -145,13 +147,14 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     ro.observe(container);
 
     return () => {
+      cancelled = true;
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
       volSeriesRef.current = null;
     };
-  }, [symbol, basePrice, isUp, type]);
+  }, [symbol, type]); // basePrice/isUp intentionally excluded — live price updates must not recreate the chart
 
   // When loadedDays increases (scroll left triggered), fetch extended history
   useEffect(() => {
