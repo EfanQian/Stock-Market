@@ -28,12 +28,12 @@ export interface AlpacaBar {
   volume: number;
 }
 
-// Fetch snapshot for multiple symbols at once
+// Fetch snapshot for multiple symbols at once — no-store so prices are always fresh
 export async function getSnapshots(symbols: string[]): Promise<Record<string, AlpacaQuote>> {
   const syms = symbols.join(',');
   const res = await fetch(`${BASE}/stocks/snapshots?symbols=${syms}&feed=iex`, {
     headers: headers(),
-    next: { revalidate: 30 },
+    cache: 'no-store',
   });
   if (!res.ok) throw new Error(`Alpaca snapshot error ${res.status}`);
   const data = await res.json() as Record<string, {
@@ -63,7 +63,7 @@ export async function getSnapshots(symbols: string[]): Promise<Record<string, Al
   return result;
 }
 
-// Fetch historical daily bars for a single symbol
+// Fetch historical daily bars — expand range automatically for lazy-load scrolling
 export async function getBars(symbol: string, days = 365): Promise<AlpacaBar[]> {
   const end = new Date();
   const start = new Date();

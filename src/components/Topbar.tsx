@@ -1,40 +1,81 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Bell, ChevronDown } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { DEMO_STOCKS, DEMO_PRICES, formatCash, formatPct } from '@/lib/finnhub';
+import { DEMO_STOCKS, formatCash, formatPct } from '@/lib/finnhub';
 import { loadPortfolio, getTotalValue, getTotalReturnPct } from '@/lib/store';
+import { usePrices } from '@/lib/usePrices';
+
+function useMarketStatus() {
+  const [status, setStatus] = useState<{ open: boolean; label: string }>({ open: false, label: '' });
+
+  useEffect(() => {
+    function compute() {
+      // NYSE hours: 9:30–16:00 ET, Mon–Fri
+      const now = new Date();
+      const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const day = et.getDay();
+      const h = et.getHours();
+      const m = et.getMinutes();
+      const mins = h * 60 + m;
+      const isWeekday = day >= 1 && day <= 5;
+      const inSession = mins >= 570 && mins < 960; // 9:30–16:00
+      const open = isWeekday && inSession;
+
+      let label: string;
+      if (open) {
+        const closeH = 16, closeM = 0;
+        const remaining = (closeH * 60 + closeM) - mins;
+        label = `OPEN · closes in ${Math.floor(remaining / 60)}h ${remaining % 60}m`;
+      } else if (!isWeekday) {
+        label = 'CLOSED · opens Mon 9:30 AM ET';
+      } else if (mins < 570) {
+        const remaining = 570 - mins;
+        label = `CLOSED · opens in ${Math.floor(remaining / 60)}h ${remaining % 60}m`;
+      } else {
+        label = 'CLOSED · opens tomorrow 9:30 AM ET';
+      }
+      setStatus({ open, label });
+    }
+    compute();
+    const t = setInterval(compute, 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  return status;
+}
 
 export default function Topbar() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<typeof DEMO_STOCKS>([]);
-  const [portfolioValue, setPortfolioValue] = useState(100000);
-  const [returnPct, setReturnPct] = useState(0);
+  const [portfolio, setPortfolio] = useState<ReturnType<typeof loadPortfolio> | null>(null);
   const router = useRouter();
+  const market = useMarketStatus();
+  const livePrices = usePrices(DEMO_STOCKS.map(s => s.symbol));
 
   useEffect(() => {
-    const p = loadPortfolio();
-    // Update prices
-    Object.keys(p.positions).forEach(sym => {
-      if (DEMO_PRICES[sym]) {
-        p.positions[sym].currentPrice = DEMO_PRICES[sym].price;
-      }
-    });
-    setPortfolioValue(getTotalValue(p));
-    setReturnPct(getTotalReturnPct(p));
+    setPortfolio(loadPortfolio());
   }, []);
+
+  // Update portfolio current prices when live data arrives
+  useEffect(() => {
+    if (!portfolio || Object.keys(livePrices).length === 0) return;
+    const updated = { ...portfolio, positions: { ...portfolio.positions } };
+    Object.keys(updated.positions).forEach(sym => {
+      if (livePrices[sym]) updated.positions[sym] = { ...updated.positions[sym], currentPrice: livePrices[sym].price };
+    });
+    setPortfolio(updated);
+  }, [livePrices]);
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); return; }
     const q = query.toUpperCase();
-    setResults(
-      DEMO_STOCKS.filter(s =>
-        s.symbol.includes(q) || s.name.toUpperCase().includes(q)
-      ).slice(0, 5)
-    );
+    setResults(DEMO_STOCKS.filter(s => s.symbol.includes(q) || s.name.toUpperCase().includes(q)).slice(0, 5));
   }, [query]);
 
+  const totalValue = portfolio ? getTotalValue(portfolio) : 100000;
+  const returnPct = portfolio ? getTotalReturnPct(portfolio) : 0;
   const isUp = returnPct >= 0;
 
   return (
@@ -70,10 +111,7 @@ export default function Topbar() {
               <div
                 key={s.symbol}
                 onClick={() => { router.push(`/stock/${s.symbol}`); setQuery(''); setResults([]); }}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 14px', cursor: 'pointer', transition: 'background 0.1s',
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', cursor: 'pointer', transition: 'background 0.1s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
@@ -97,7 +135,7 @@ export default function Topbar() {
         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em' }}>PORTFOLIO</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontWeight: 700, fontSize: '0.95rem', fontFamily: 'monospace', color: 'var(--text-primary)' }}>
-            {formatCash(portfolioValue)}
+            {formatCash(totalValue)}
           </span>
           <span style={{
             fontSize: '0.75rem', fontWeight: 600, padding: '2px 7px', borderRadius: 6,
@@ -109,10 +147,19 @@ export default function Topbar() {
         </div>
       </div>
 
-      {/* Live indicator */}
+      {/* Market status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--positive)' }} />
-        <span style={{ fontSize: '0.7rem', color: 'var(--positive)', fontWeight: 700, letterSpacing: '0.05em' }}>LIVE</span>
+        <div className={market.open ? 'live-dot' : undefined} style={{
+          width: 7, height: 7, borderRadius: '50%',
+          background: market.open ? 'var(--positive)' : 'var(--text-muted)',
+        }} />
+        <span style={{
+          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em',
+          color: market.open ? 'var(--positive)' : 'var(--text-muted)',
+          whiteSpace: 'nowrap',
+        }}>
+          {market.label || (market.open ? 'OPEN' : 'CLOSED')}
+        </span>
       </div>
 
       {/* Notifications */}

@@ -37,6 +37,39 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hoverInfo, setHoverInfo] = useState<{ date: string; ohlcv: string } | null>(null);
+  const [loadedDays, setLoadedDays] = useState(days);
+  const barsRef = useRef<Bar[]>([]);
+  const seriesRef = useRef<any>(null);
+  const volSeriesRef = useRef<any>(null);
+  const isDemoRef = useRef(false);
+  const fetchingRef = useRef(false);
+
+  function applyBarsToChart(chart: IChartApi, bars: Bar[]) {
+    if (type === 'candle') {
+      if (!seriesRef.current) {
+        seriesRef.current = chart.addSeries(CandlestickSeries, {
+          upColor: '#22C55E', downColor: '#EF4444',
+          borderUpColor: '#22C55E', borderDownColor: '#EF4444',
+          wickUpColor: '#22C55E', wickDownColor: '#EF4444',
+        });
+        volSeriesRef.current = chart.addSeries(HistogramSeries, {
+          color: '#22C55E', priceFormat: { type: 'volume' }, priceScaleId: 'volume',
+        });
+        chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+      }
+      seriesRef.current.setData(bars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close })));
+      volSeriesRef.current?.setData(bars.map(b => ({ time: b.time as UTCTimestamp, value: b.volume, color: b.close >= b.open ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)' })));
+    } else {
+      if (!seriesRef.current) {
+        seriesRef.current = chart.addSeries(LineSeries, {
+          color: isUp ? '#22C55E' : '#EF4444', lineWidth: 2,
+          crosshairMarkerVisible: true, crosshairMarkerRadius: 5,
+        });
+      }
+      seriesRef.current.setData(bars.map(b => ({ time: b.time as UTCTimestamp, value: b.close })));
+    }
+  }
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -58,52 +91,79 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
 
     chartRef.current = chart;
 
-    async function loadData() {
+    // Crosshair move → show date + OHLCV overlay
+    chart.subscribeCrosshairMove(param => {
+      if (!param.time || !param.seriesData.size) { setHoverInfo(null); return; }
+      const ts = param.time as number;
+      const d = new Date(ts * 1000);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+      const bar = barsRef.current.find(b => b.time === ts);
+      let ohlcv = '';
+      if (bar) {
+        ohlcv = `O $${bar.open.toFixed(2)}  H $${bar.high.toFixed(2)}  L $${bar.low.toFixed(2)}  C $${bar.close.toFixed(2)}`;
+        if (bar.volume > 0) ohlcv += `  Vol ${(bar.volume / 1e6).toFixed(1)}M`;
+      }
+      setHoverInfo({ date: dateStr, ohlcv });
+    });
+
+    // Lazy-load more history when user scrolls left past the first 10 bars
+    chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+      if (!range || fetchingRef.current || isDemoRef.current) return;
+      if (range.from < 10) {
+        setLoadedDays(prev => prev + 365);
+      }
+    });
+
+    async function loadData(numDays: number) {
       setLoading(true);
       let bars: Bar[] = [];
-
       try {
-        const res = await fetch(`/api/bars/${symbol}?days=${days}`);
+        const res = await fetch(`/api/bars/${symbol}?days=${numDays}`);
         const json = await res.json() as { bars: Bar[]; demo?: boolean };
-        if (json.bars && json.bars.length > 0) bars = json.bars;
-      } catch { /* fall through to demo */ }
-
-      if (bars.length === 0) bars = generateBars(basePrice, days, isUp);
-
-      if (type === 'candle') {
-        const series = chart.addSeries(CandlestickSeries, {
-          upColor: '#22C55E', downColor: '#EF4444',
-          borderUpColor: '#22C55E', borderDownColor: '#EF4444',
-          wickUpColor: '#22C55E', wickDownColor: '#EF4444',
-        });
-        series.setData(bars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close })));
-
-        const volSeries = chart.addSeries(HistogramSeries, {
-          color: '#22C55E', priceFormat: { type: 'volume' }, priceScaleId: 'volume',
-        });
-        chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-        volSeries.setData(bars.map(b => ({ time: b.time as UTCTimestamp, value: b.volume, color: b.close >= b.open ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)' })));
-      } else {
-        const series = chart.addSeries(LineSeries, {
-          color: isUp ? '#22C55E' : '#EF4444', lineWidth: 2,
-          crosshairMarkerVisible: true, crosshairMarkerRadius: 5,
-        });
-        series.setData(bars.map(b => ({ time: b.time as UTCTimestamp, value: b.close })));
-      }
-
+        if (json.bars && json.bars.length > 0) { bars = json.bars; isDemoRef.current = !!json.demo; }
+      } catch { /* fall through */ }
+      if (bars.length === 0) { bars = generateBars(basePrice, numDays, isUp); isDemoRef.current = true; }
+      barsRef.current = bars;
+      applyBarsToChart(chart, bars);
       chart.timeScale().fitContent();
       setLoading(false);
     }
 
-    loadData();
+    loadData(loadedDays);
 
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
     });
     ro.observe(container);
 
-    return () => { ro.disconnect(); chart.remove(); };
-  }, [symbol, basePrice, isUp, type, days]);
+    return () => {
+      ro.disconnect();
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+      volSeriesRef.current = null;
+    };
+  }, [symbol, basePrice, isUp, type]);
+
+  // When loadedDays increases (scroll left triggered), fetch extended history
+  useEffect(() => {
+    if (!chartRef.current || loadedDays === days || fetchingRef.current) return;
+    fetchingRef.current = true;
+
+    async function extendHistory() {
+      let bars: Bar[] = [];
+      try {
+        const res = await fetch(`/api/bars/${symbol}?days=${loadedDays}`);
+        const json = await res.json() as { bars: Bar[]; demo?: boolean };
+        if (json.bars && json.bars.length > 0) bars = json.bars;
+      } catch { /* keep existing */ }
+      if (bars.length === 0) return;
+      barsRef.current = bars;
+      applyBarsToChart(chartRef.current!, bars);
+      fetchingRef.current = false;
+    }
+    extendHistory();
+  }, [loadedDays]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -113,6 +173,25 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
+
+      {/* Google Finance-style OHLCV + date overlay on crosshair hover */}
+      {hoverInfo && (
+        <div style={{
+          position: 'absolute', top: 8, left: 12, zIndex: 10, pointerEvents: 'none',
+          background: 'rgba(11,17,32,0.88)', backdropFilter: 'blur(6px)',
+          border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px',
+        }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+            {hoverInfo.date}
+          </div>
+          {hoverInfo.ohlcv && (
+            <div style={{ fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary)', letterSpacing: '0.03em' }}>
+              {hoverInfo.ohlcv}
+            </div>
+          )}
+        </div>
+      )}
+
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
