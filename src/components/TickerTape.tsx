@@ -1,13 +1,18 @@
 'use client';
 
-import { DEMO_PRICES, DEMO_STOCKS, formatPrice, formatPct } from '@/lib/finnhub';
+import { DEMO_STOCKS, formatPrice, formatPct } from '@/lib/finnhub';
+import { usePrices } from '@/lib/usePrices';
 
 export default function TickerTape() {
+  const symbols = DEMO_STOCKS.slice(0, 10).map(s => s.symbol);
+  const prices = usePrices(symbols, 30000);
+
   const items = DEMO_STOCKS.slice(0, 10).map(s => ({
     ...s,
-    ...DEMO_PRICES[s.symbol],
+    price: prices[s.symbol]?.price ?? 0,
+    changePercent: prices[s.symbol]?.changePercent ?? 0,
   }));
-  const doubled = [...items, ...items]; // seamless loop
+  const doubled = [...items, ...items];
 
   return (
     <div style={{
@@ -21,9 +26,9 @@ export default function TickerTape() {
           return (
             <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0 20px', borderRight: '1px solid var(--border)', fontSize: '0.78rem' }}>
               <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{item.symbol}</span>
-              <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{formatPrice(item.price)}</span>
+              <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{item.price > 0 ? formatPrice(item.price) : '—'}</span>
               <span style={{ color: isUp ? 'var(--positive)' : 'var(--negative)', fontWeight: 600 }}>
-                {isUp ? '▲' : '▼'} {formatPct(item.changePercent)}
+                {item.price > 0 ? `${isUp ? '▲' : '▼'} ${formatPct(item.changePercent)}` : '—'}
               </span>
             </span>
           );

@@ -63,11 +63,10 @@ export async function getSnapshots(symbols: string[]): Promise<Record<string, Al
   return result;
 }
 
-// Fetch historical daily bars — expand range automatically for lazy-load scrolling
-export async function getBars(symbol: string, days = 365): Promise<AlpacaBar[]> {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - days);
+// Fetch historical daily bars — supports explicit date range or relative days
+export async function getBars(symbol: string, days = 365, startDate?: string, endDate?: string): Promise<AlpacaBar[]> {
+  const end = endDate ? new Date(endDate + 'T00:00:00') : new Date();
+  const start = startDate ? new Date(startDate + 'T00:00:00') : new Date(end.getTime() - days * 86400000);
 
   const params = new URLSearchParams({
     timeframe: '1Day',
