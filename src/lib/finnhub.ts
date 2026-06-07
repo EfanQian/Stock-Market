@@ -176,24 +176,24 @@ export function formatCash(n: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n);
 }
 
-// Realistic demo prices for when API key not set
+// Fallback prices used when Alpaca API key is not configured
 export const DEMO_PRICES: Record<string, { price: number; change: number; changePercent: number }> = {
-  AAPL:    { price: 280.07, change: 8.84,  changePercent: 3.26  },
-  NVDA:    { price: 198.44, change: 5.12,  changePercent: 2.65  },
-  MSFT:    { price: 425.32, change: -3.21, changePercent: -0.75 },
-  TSLA:    { price: 391.20, change: 12.50, changePercent: 3.30  },
-  AMZN:    { price: 268.15, change: 1.95,  changePercent: 0.73  },
-  GOOGL:   { price: 186.92, change: -1.43, changePercent: -0.76 },
-  META:    { price: 612.45, change: 8.30,  changePercent: 1.37  },
-  JPM:     { price: 248.10, change: 2.15,  changePercent: 0.87  },
-  V:       { price: 347.80, change: 1.20,  changePercent: 0.35  },
-  JNJ:     { price: 155.30, change: -0.45, changePercent: -0.29 },
-  UNH:     { price: 488.75, change: 5.80,  changePercent: 1.20  },
-  XOM:     { price: 117.55, change: -0.95, changePercent: -0.80 },
-  DIS:     { price: 103.20, change: -1.10, changePercent: -1.06 },
-  NKE:     { price: 44.35,  change: 0.55,  changePercent: 1.26  },
-  SPY:     { price: 581.40, change: 3.20,  changePercent: 0.55  },
-  QQQ:     { price: 502.85, change: 4.15,  changePercent: 0.83  },
-  AWK:     { price: 133.20, change: 0.30,  changePercent: 0.23  },
-  'BTC-USD': { price: 79000, change: -1200, changePercent: -1.50 },
+  AAPL:    { price: 226.84, change: 2.15,  changePercent: 0.96  },
+  NVDA:    { price: 131.38, change: 4.20,  changePercent: 3.31  },
+  MSFT:    { price: 449.20, change: -2.85, changePercent: -0.63 },
+  TSLA:    { price: 263.55, change: 8.30,  changePercent: 3.25  },
+  AMZN:    { price: 211.40, change: 1.45,  changePercent: 0.69  },
+  GOOGL:   { price: 188.60, change: -1.20, changePercent: -0.63 },
+  META:    { price: 591.80, change: 7.80,  changePercent: 1.34  },
+  JPM:     { price: 257.30, change: 1.95,  changePercent: 0.76  },
+  V:       { price: 293.10, change: 0.90,  changePercent: 0.31  },
+  JNJ:     { price: 159.45, change: -0.35, changePercent: -0.22 },
+  UNH:     { price: 497.60, change: 4.60,  changePercent: 0.93  },
+  XOM:     { price: 118.20, change: -0.85, changePercent: -0.71 },
+  DIS:     { price: 107.35, change: -0.95, changePercent: -0.88 },
+  NKE:     { price: 73.80,  change: 0.45,  changePercent: 0.61  },
+  SPY:     { price: 576.40, change: 2.80,  changePercent: 0.49  },
+  QQQ:     { price: 496.90, change: 3.60,  changePercent: 0.73  },
+  AWK:     { price: 130.55, change: 0.25,  changePercent: 0.19  },
+  'BTC-USD': { price: 64200, change: -820, changePercent: -1.26 },
 };

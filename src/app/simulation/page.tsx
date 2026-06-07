@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, Square, Zap, Brain, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { DEMO_STOCKS, DEMO_PRICES, formatPrice, formatPct, formatCash, getRiskColor, type RiskLevel } from '@/lib/finnhub';
+import { usePrice } from '@/lib/usePrices';
 
 const StockChart = dynamic(() => import('@/components/StockChart'), { ssr: false });
 
@@ -72,9 +73,10 @@ export default function SimulationPage() {
   const [toast, setToast] = useState('');
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const livePrice = usePrice(selectedSym);
   const stock = DEMO_STOCKS.find(s => s.symbol === selectedSym)!;
-  const basePrice = DEMO_PRICES[selectedSym]?.price ?? 150;
-  const isUp = (DEMO_PRICES[selectedSym]?.changePercent ?? 0) >= 0;
+  const basePrice = livePrice?.price ?? DEMO_PRICES[selectedSym]?.price ?? 150;
+  const isUp = livePrice ? livePrice.changePercent >= 0 : (DEMO_PRICES[selectedSym]?.changePercent ?? 0) >= 0;
 
   // Days to show before sim starts (estimate)
   const previewDays = useMemo(() => countTradingDays(startDate, endDate), [startDate, endDate]);
@@ -326,13 +328,20 @@ export default function SimulationPage() {
                 )}
                 {(!isActive || simBars.length === 0) && (
                   <span style={{ fontSize: '0.8rem', marginLeft: 8, color: isUp ? 'var(--positive)' : 'var(--negative)' }}>
-                    {isUp ? '▲' : '▼'} {formatPct(DEMO_PRICES[selectedSym]?.changePercent ?? 0)}
+                    {isUp ? '▲' : '▼'} {formatPct(livePrice?.changePercent ?? DEMO_PRICES[selectedSym]?.changePercent ?? 0)}
                   </span>
                 )}
               </div>
             </div>
             <div style={{ height: 320, padding: 16 }}>
-              <StockChart symbol={selectedSym} basePrice={basePrice} isUp={isUp} type="candle" days={Math.max(previewDays, 365)} />
+              <StockChart
+                symbol={selectedSym}
+                basePrice={basePrice}
+                isUp={isUp}
+                type="candle"
+                days={Math.max(previewDays, 365)}
+                externalBars={simBars.length > 0 && simState !== 'idle' ? simBars.slice(0, simDay + 1) : undefined}
+              />
             </div>
           </div>
 

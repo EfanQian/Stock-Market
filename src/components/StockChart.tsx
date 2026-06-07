@@ -31,9 +31,10 @@ interface Props {
   isUp: boolean;
   type?: 'candle' | 'line';
   days?: number;
+  externalBars?: Bar[]; // when provided, skip fetch and use these bars
 }
 
-export default function StockChart({ symbol, basePrice, isUp, type = 'candle', days = 180 }: Props) {
+export default function StockChart({ symbol, basePrice, isUp, type = 'candle', days = 180, externalBars }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,7 +130,14 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
       setLoading(false);
     }
 
-    loadData(loadedDays);
+    if (externalBars && externalBars.length > 0) {
+      barsRef.current = externalBars;
+      applyBarsToChart(chart, externalBars);
+      chart.timeScale().fitContent();
+      setLoading(false);
+    } else {
+      loadData(loadedDays);
+    }
 
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
@@ -164,6 +172,20 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     }
     extendHistory();
   }, [loadedDays]);
+
+  // Update chart data when externally provided bars change (simulation playback)
+  useEffect(() => {
+    if (!externalBars || externalBars.length === 0 || !seriesRef.current || !chartRef.current) return;
+    barsRef.current = externalBars;
+    const mapped = externalBars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close }));
+    seriesRef.current.setData(mapped);
+    volSeriesRef.current?.setData(externalBars.map(b => ({
+      time: b.time as UTCTimestamp, value: b.volume,
+      color: b.close >= b.open ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
+    })));
+    // Keep the latest bar in view
+    chartRef.current.timeScale().scrollToPosition(0, false);
+  }, [externalBars]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
