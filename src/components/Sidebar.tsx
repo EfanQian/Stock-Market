@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, TrendingUp, Briefcase, Clock,
-  Trophy, Star, Newspaper, Settings, Zap,
+  Trophy, Star, Newspaper, Settings, Zap, HelpCircle,
 } from 'lucide-react';
+import { TUTORIAL_KEY } from './Tutorial';
 
 const NAV = [
   { href: '/',            icon: LayoutDashboard, label: 'Dashboard' },
@@ -57,15 +58,17 @@ export default function Sidebar() {
           const active = pathname === href || (href !== '/' && pathname.startsWith(href));
           return (
             <Link key={href} href={href} style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 12px', borderRadius: 8,
-                color: active ? 'var(--brand)' : 'var(--text-secondary)',
-                background: active ? 'rgba(13,191,118,0.1)' : 'transparent',
-                fontSize: '0.875rem', fontWeight: 500,
-                transition: 'all 0.15s',
-                cursor: 'pointer',
-              }}
+              <div
+                data-nav={href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 8,
+                  color: active ? 'var(--brand)' : 'var(--text-secondary)',
+                  background: active ? 'rgba(13,191,118,0.1)' : 'transparent',
+                  fontSize: '0.875rem', fontWeight: 500,
+                  transition: 'all 0.15s',
+                  cursor: 'pointer',
+                }}
                 onMouseEnter={e => {
                   if (!active) {
                     (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)';
@@ -92,6 +95,7 @@ export default function Sidebar() {
         padding: '12px', borderRadius: 10,
         background: 'rgba(13,191,118,0.06)',
         border: '1px solid rgba(13,191,118,0.15)',
+        marginBottom: 8,
       }}>
         <div style={{ fontSize: '0.7rem', color: 'var(--brand)', fontWeight: 700, marginBottom: 4 }}>
           PAPER TRADING
@@ -100,6 +104,18 @@ export default function Sidebar() {
           No real money. Pure simulation.
         </div>
       </div>
+      <button
+        onClick={() => { localStorage.removeItem(TUTORIAL_KEY); window.location.reload(); }}
+        style={{
+          width: '100%', background: 'transparent',
+          border: '1px solid var(--border-light)', borderRadius: 8,
+          padding: '7px 10px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 7,
+          color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600,
+        }}
+      >
+        <HelpCircle size={14} /> Restart Tutorial
+      </button>
     </aside>
   );
 }
