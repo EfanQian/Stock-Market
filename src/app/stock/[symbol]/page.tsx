@@ -122,7 +122,7 @@ export default function StockPage({ params }: { params: Promise<{ symbol: string
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={toggleWatchlist} style={{ background: watchlisted ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${watchlisted ? 'rgba(245,158,11,0.3)' : 'var(--border-light)'}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: watchlisted ? 'var(--warning)' : 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>
+            <button data-testid="watchlist-btn" onClick={toggleWatchlist} style={{ background: watchlisted ? 'rgba(245,158,11,0.12)' : 'transparent', border: `1px solid ${watchlisted ? 'rgba(245,158,11,0.3)' : 'var(--border-light)'}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: watchlisted ? 'var(--warning)' : 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>
               <Star size={16} fill={watchlisted ? 'currentColor' : 'none'} /> {watchlisted ? 'Watching' : 'Watch'}
             </button>
           </div>
