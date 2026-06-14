@@ -56,6 +56,9 @@ export default function Topbar() {
 
   useEffect(() => {
     setPortfolio(loadPortfolio());
+    const refresh = () => setPortfolio(loadPortfolio());
+    window.addEventListener('portfolio-updated', refresh);
+    return () => window.removeEventListener('portfolio-updated', refresh);
   }, []);
 
   // Update portfolio current prices when live data arrives

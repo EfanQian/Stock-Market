@@ -21,6 +21,7 @@ export default function SettingsPage() {
 
   function handleReset() {
     resetPortfolio();
+    window.dispatchEvent(new Event('portfolio-updated'));
     setConfirmReset(false);
     setResetDone(true);
     setTimeout(() => setResetDone(false), 3000);
