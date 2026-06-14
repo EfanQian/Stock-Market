@@ -31,10 +31,12 @@ interface Props {
   isUp: boolean;
   type?: 'candle' | 'line';
   days?: number;
-  externalBars?: Bar[]; // when provided, skip fetch and use these bars
+  externalBars?: Bar[];
+  predictionLine?: { time: number; value: number }[];
+  predictionColor?: string;
 }
 
-export default function StockChart({ symbol, basePrice, isUp, type = 'candle', days = 180, externalBars }: Props) {
+export default function StockChart({ symbol, basePrice, isUp, type = 'candle', days = 180, externalBars, predictionLine, predictionColor }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
   const barsRef = useRef<Bar[]>([]);
   const seriesRef = useRef<any>(null);
   const volSeriesRef = useRef<any>(null);
+  const predLineSeriesRef = useRef<any>(null);
   const isDemoRef = useRef(false);
   const fetchingRef = useRef(false);
 
@@ -153,6 +156,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
       chartRef.current = null;
       seriesRef.current = null;
       volSeriesRef.current = null;
+      predLineSeriesRef.current = null;
     };
   }, [symbol, type]); // basePrice/isUp intentionally excluded — live price updates must not recreate the chart
 
@@ -175,6 +179,31 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     }
     extendHistory();
   }, [loadedDays]);
+
+  // Add / update / remove the AI prediction projection line
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    if (predLineSeriesRef.current) {
+      try { chartRef.current.removeSeries(predLineSeriesRef.current); } catch { /* chart may have been rebuilt */ }
+      predLineSeriesRef.current = null;
+    }
+
+    if (!predictionLine || predictionLine.length < 2) return;
+
+    const color = predictionColor ?? '#8B5CF6';
+    predLineSeriesRef.current = chartRef.current.addSeries(LineSeries, {
+      color,
+      lineWidth: 2,
+      lineStyle: 2, // dashed
+      crosshairMarkerVisible: false,
+      lastValueVisible: true,
+      priceLineVisible: false,
+    });
+    predLineSeriesRef.current.setData(
+      predictionLine.map(p => ({ time: p.time as UTCTimestamp, value: p.value }))
+    );
+  }, [predictionLine, predictionColor]);
 
   // Update chart data when externally provided bars change (simulation playback)
   useEffect(() => {

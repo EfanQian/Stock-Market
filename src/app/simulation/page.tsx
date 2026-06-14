@@ -71,6 +71,7 @@ export default function SimulationPage() {
   const [horizon, setHorizon] = useState<'1_day' | '1_week' | '1_month'>('1_week');
   const [showPrediction, setShowPrediction] = useState(false);
   const [toast, setToast] = useState('');
+  const [predictionLine, setPredictionLine] = useState<{ time: number; value: number }[] | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const livePrice = usePrice(selectedSym);
@@ -173,8 +174,26 @@ export default function SimulationPage() {
     setSimState('idle');
     setSimDay(0);
     setSimBars([]);
+    setPredictionLine(null);
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
+
+  function buildPredictionLine(pred: Prediction, bars: Bar[], day: number, h: typeof horizon) {
+    if (bars.length === 0 || day >= bars.length) return;
+    const horizonBars = h === '1_day' ? 1 : h === '1_week' ? 5 : 21;
+    const dirFactor = pred.direction === 'bullish' ? 1 : pred.direction === 'bearish' ? -1 : 0;
+    const driftPerBar = dirFactor * (pred.confidence / 100) * 0.004;
+
+    const startBar = bars[day];
+    const line: { time: number; value: number }[] = [{ time: startBar.time, value: startBar.close }];
+    let price = startBar.close;
+    const endIdx = Math.min(day + horizonBars, bars.length - 1);
+    for (let i = day + 1; i <= endIdx; i++) {
+      price = price * (1 + driftPerBar);
+      line.push({ time: bars[i].time, value: price });
+    }
+    if (line.length >= 2) setPredictionLine(line);
+  }
 
   const handleSimTrade = (side: 'buy' | 'sell') => {
     const sh = parseFloat(simShares);
@@ -210,7 +229,11 @@ export default function SimulationPage() {
           changePercent: DEMO_PRICES[selectedSym]?.changePercent ?? 0,
         }),
       });
-      if (res.ok) setPrediction(await res.json() as Prediction);
+      if (res.ok) {
+        const pred = await res.json() as Prediction;
+        setPrediction(pred);
+        buildPredictionLine(pred, simBars, simDay, horizon);
+      }
     } catch { /* show nothing */ }
     setPredicting(false);
   };
@@ -227,6 +250,7 @@ export default function SimulationPage() {
   }, [simDay, simBars, isActive]);
 
   const dirColor = prediction?.direction === 'bullish' ? 'var(--positive)' : prediction?.direction === 'bearish' ? 'var(--negative)' : 'var(--text-secondary)';
+  const predLineColor = prediction?.direction === 'bullish' ? '#22C55E' : prediction?.direction === 'bearish' ? '#EF4444' : '#8B5CF6';
   const confColor = !prediction ? 'var(--text-muted)' : prediction.confidence >= 70 ? 'var(--positive)' : prediction.confidence >= 41 ? 'var(--warning)' : 'var(--negative)';
 
   return (
@@ -318,6 +342,11 @@ export default function SimulationPage() {
                 {simBars.length > 0 && simState !== 'idle' && (
                   <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: 'var(--positive)', background: 'rgba(34,197,94,0.1)' }}>LIVE DATA</span>
                 )}
+                {predictionLine && (
+                  <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: predLineColor, background: `${predLineColor}20`, border: `1px solid ${predLineColor}40` }}>
+                    AI PROJECTION — {prediction?.direction?.toUpperCase()} {prediction?.confidence}%
+                  </span>
+                )}
               </div>
               <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1.1rem' }}>
                 {formatPrice(isActive ? simPrice : basePrice)}
@@ -341,6 +370,8 @@ export default function SimulationPage() {
                 type="candle"
                 days={Math.max(previewDays, 365)}
                 externalBars={simBars.length > 0 && simState !== 'idle' ? simBars.slice(0, simDay + 1) : undefined}
+                predictionLine={predictionLine ?? undefined}
+                predictionColor={predLineColor}
               />
             </div>
           </div>
@@ -439,7 +470,7 @@ export default function SimulationPage() {
               <div style={{ padding: 16 }}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
                   {([['1_day', '1 Day'], ['1_week', '1 Week'], ['1_month', '1 Month']] as const).map(([val, label]) => (
-                    <button key={val} onClick={() => { setHorizon(val); setPrediction(null); }} style={{ flex: 1, padding: '6px 0', borderRadius: 7, border: '1px solid', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, background: horizon === val ? 'rgba(139,92,246,0.12)' : 'transparent', color: horizon === val ? 'var(--violet)' : 'var(--text-muted)', borderColor: horizon === val ? 'rgba(139,92,246,0.3)' : 'var(--border-light)' }}>
+                    <button key={val} onClick={() => { setHorizon(val); setPrediction(null); setPredictionLine(null); }} style={{ flex: 1, padding: '6px 0', borderRadius: 7, border: '1px solid', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, background: horizon === val ? 'rgba(139,92,246,0.12)' : 'transparent', color: horizon === val ? 'var(--violet)' : 'var(--text-muted)', borderColor: horizon === val ? 'rgba(139,92,246,0.3)' : 'var(--border-light)' }}>
                       {label}
                     </button>
                   ))}
