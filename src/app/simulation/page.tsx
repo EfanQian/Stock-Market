@@ -514,6 +514,36 @@ export default function SimulationPage() {
             )}
           </div>
 
+          {/* AI Reasoning Card — auto-shown when sim starts */}
+          {prediction && isActive && (
+            <div style={{ background: 'var(--bg-card)', border: `1px solid ${predLineColor}30`, borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${predLineColor}20`, background: `${predLineColor}08`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Brain size={16} color={predLineColor} />
+                <span style={{ fontWeight: 700, fontSize: '0.88rem', color: predLineColor }}>Why {prediction.direction.toUpperCase()}?</span>
+                <span style={{ marginLeft: 'auto', fontFamily: 'monospace', fontWeight: 800, fontSize: '0.85rem', color: predLineColor }}>{prediction.confidence}% confidence</span>
+              </div>
+              <div style={{ padding: '14px 16px' }}>
+                <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+                  {prediction.summary}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {prediction.factors.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        fontSize: '0.68rem', fontWeight: 800, width: 20, textAlign: 'center',
+                        color: f.s === 'positive' ? 'var(--positive)' : f.s === 'negative' ? 'var(--negative)' : 'var(--text-muted)',
+                      }}>
+                        {f.s === 'positive' ? '▲' : f.s === 'negative' ? '▼' : '—'}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', flex: 1 }}>{f.f}</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 4 }}>{f.w.toUpperCase()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* AI Prediction Panel */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
