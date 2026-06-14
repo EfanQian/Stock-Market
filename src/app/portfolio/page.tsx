@@ -63,7 +63,7 @@ export default function PortfolioPage() {
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, maxWidth: 400, width: '100%', textAlign: 'center' }}>
             <AlertTriangle size={40} color="var(--warning)" style={{ display: 'block', margin: '0 auto 16px' }} />
             <h2 style={{ margin: '0 0 8px', fontSize: '1.2rem' }}>Reset Portfolio?</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 24 }}>This will clear all positions, transactions, and reset cash to $100,000. XP and achievements are kept.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 24 }}>This will clear all positions, transactions, and reset cash to $100,000. This cannot be undone.</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => setConfirmReset(false)} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
               <button onClick={() => { setPortfolio(resetPortfolio()); setConfirmReset(false); }} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--negative)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Reset</button>

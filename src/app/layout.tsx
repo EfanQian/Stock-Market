@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
 import TickerTape from '@/components/TickerTape';
 import Tutorial from '@/components/Tutorial';
+import ThemeProvider from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'MarketSim Pro — Trade Like a Pro. Risk Nothing.',
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body style={{ margin: 0, minHeight: '100vh', display: 'flex' }}>
+        <ThemeProvider />
         <Tutorial />
         <Sidebar />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', overflow: 'auto' }}>

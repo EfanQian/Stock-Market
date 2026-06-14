@@ -249,24 +249,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* XP bar */}
-      {portfolio && portfolio.xp > 0 && (
-        <div style={{ marginTop: 20, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={20} color="var(--violet)" />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Level {Math.floor(portfolio.xp / 100) + 1} Trader</span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{portfolio.xp} XP · {100 - (portfolio.xp % 100)} to next level</span>
-            </div>
-            <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${portfolio.xp % 100}%`, background: 'var(--violet)', borderRadius: 3 }} />
-            </div>
-          </div>
-          <Link href="/leaderboard" style={{ fontSize: '0.8rem', color: 'var(--violet)', textDecoration: 'none', fontWeight: 600 }}>Leaderboard →</Link>
-        </div>
-      )}
     </div>
   );
 }
