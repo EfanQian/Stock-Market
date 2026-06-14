@@ -39,16 +39,39 @@ function countTradingDays(start: string, end: string): number {
   return count;
 }
 
-// Seeded fallback price when Alpaca bars aren't available
-function fallbackPrice(basePrice: number, simDay: number, totalDays: number, seed: number, isUp: boolean): number {
-  if (totalDays === 0) return basePrice;
-  const drift = isUp ? 0.08 + seed * 0.28 : -0.03 - seed * 0.22;
-  return basePrice * (
-    1 +
-    (simDay / totalDays) * drift +
-    Math.sin(simDay * 0.3 + seed * Math.PI * 2) * 0.05 +
-    Math.cos(simDay * 0.07 + seed * 4.2) * 0.02
-  );
+function generateAIDrivenBars(
+  basePrice: number,
+  numDays: number,
+  startDateStr: string,
+  direction: 'bullish' | 'bearish' | 'neutral',
+  confidence: number,
+): Bar[] {
+  const bars: Bar[] = [];
+  const startTime = Math.floor(new Date(startDateStr + 'T12:00:00').getTime() / 1000);
+  const dirFactor = direction === 'bullish' ? 1 : direction === 'bearish' ? -1 : 0;
+  // annual drift scaled by direction + confidence, daily vol ~1.2%
+  const dailyDrift = dirFactor * (confidence / 100) * 0.4 / 252;
+  const dailyVol = 0.012;
+
+  let price = basePrice;
+  let time = startTime;
+  let count = 0;
+
+  while (count < numDays) {
+    const dow = new Date(time * 1000).getDay();
+    if (dow !== 0 && dow !== 6) {
+      const noise = (Math.random() - 0.5) * 2 * dailyVol;
+      const open = price;
+      const close = Math.max(price * (1 + dailyDrift + noise), 0.01);
+      const high = Math.max(open, close) * (1 + Math.random() * 0.007);
+      const low  = Math.min(open, close) * (1 - Math.random() * 0.007);
+      bars.push({ time, open, high, low, close, volume: Math.floor(40e6 + Math.random() * 90e6) });
+      price = close;
+      count++;
+    }
+    time += 86400;
+  }
+  return bars;
 }
 
 export default function SimulationPage() {
@@ -63,7 +86,6 @@ export default function SimulationPage() {
   const [simState, setSimState] = useState<SimState>('idle');
   const [simDay, setSimDay] = useState(0);
   const [simBars, setSimBars] = useState<Bar[]>([]);
-  const [simSeed, setSimSeed] = useState(0.5);
   const [simPortfolio, setSimPortfolio] = useState<SimPortfolio>({ cash: 100000, positions: {} });
   const [simShares, setSimShares] = useState('');
   const [prediction, setPrediction] = useState<Prediction | null>(null);
@@ -72,6 +94,7 @@ export default function SimulationPage() {
   const [showPrediction, setShowPrediction] = useState(false);
   const [toast, setToast] = useState('');
   const [predictionLine, setPredictionLine] = useState<{ time: number; value: number }[] | null>(null);
+  const [aiDriven, setAiDriven] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const livePrice = usePrice(selectedSym);
@@ -85,10 +108,9 @@ export default function SimulationPage() {
   // Total days during simulation: use loaded bar count, fall back to estimate
   const totalDays = simBars.length > 0 ? simBars.length : previewDays;
 
-  // Price: step through real bars when loaded, otherwise use seeded formula
   const simPrice = simBars.length > 0 && simDay < simBars.length
     ? simBars[simDay].close
-    : fallbackPrice(basePrice, simDay, totalDays, simSeed, isUp);
+    : basePrice;
 
   const simReturn = simPortfolio.cash + Object.values(simPortfolio.positions).reduce((s, p) => s + p.shares * simPrice, 0) - 100000;
   const simReturnPct = (simReturn / 100000) * 100;
@@ -120,27 +142,58 @@ export default function SimulationPage() {
     setSimDay(0);
     setSimPortfolio({ cash: 100000, positions: {} });
     setSimBars([]);
+    setPredictionLine(null);
+    setPrediction(null);
+
+    // Fetch real bars and AI prediction in parallel
+    const [barsResult, predResult] = await Promise.allSettled([
+      fetch(`/api/bars/${selectedSym}?start=${startDate}&end=${endDate}`)
+        .then(r => r.json() as Promise<{ bars: Bar[]; demo?: boolean }>),
+      fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: selectedSym,
+          stockName: stock?.name ?? selectedSym,
+          horizon: '1_month',
+          price: basePrice,
+          changePercent: DEMO_PRICES[selectedSym]?.changePercent ?? 0,
+        }),
+      }).then(r => r.json() as Promise<Prediction>),
+    ]);
 
     let bars: Bar[] = [];
-    try {
-      const res = await fetch(`/api/bars/${selectedSym}?start=${startDate}&end=${endDate}`);
-      const json = await res.json() as { bars: Bar[]; demo?: boolean };
-      if (json.bars && json.bars.length > 0) bars = json.bars;
-    } catch { /* fall through to formula */ }
-
-    const seed = Math.random();
-    setSimSeed(seed);
-    setSimBars(bars);
-
-    const days = bars.length > 0 ? bars.length : countTradingDays(startDate, endDate);
-
-    if (days === 0) {
-      setToast('Invalid date range');
-      setTimeout(() => setToast(''), 2000);
-      setSimState('idle');
-      return;
+    if (barsResult.status === 'fulfilled' && barsResult.value.bars?.length > 0) {
+      bars = barsResult.value.bars;
     }
 
+    const pred = predResult.status === 'fulfilled' ? predResult.value : null;
+    if (pred) setPrediction(pred);
+
+    // No real bars → generate AI-driven candlesticks
+    if (bars.length === 0) {
+      const numDays = countTradingDays(startDate, endDate);
+      if (numDays === 0) {
+        setToast('Invalid date range');
+        setTimeout(() => setToast(''), 2000);
+        setSimState('idle');
+        return;
+      }
+      bars = generateAIDrivenBars(
+        basePrice,
+        numDays,
+        startDate,
+        pred?.direction ?? (isUp ? 'bullish' : 'bearish'),
+        pred?.confidence ?? 55,
+      );
+      setAiDriven(true);
+    } else {
+      setAiDriven(false);
+    }
+
+    setSimBars(bars);
+
+    const days = bars.length;
     setSimState('running');
     intervalRef.current = setInterval(() => {
       setSimDay(d => {
@@ -175,6 +228,8 @@ export default function SimulationPage() {
     setSimDay(0);
     setSimBars([]);
     setPredictionLine(null);
+    setPrediction(null);
+    setAiDriven(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
@@ -339,10 +394,15 @@ export default function SimulationPage() {
                 <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{selectedSym}</span>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{stock?.name}</span>
                 <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: getRiskColor(stock?.risk as RiskLevel), background: `${getRiskColor(stock?.risk as RiskLevel)}20` }}>{stock?.risk} Risk</span>
-                {simBars.length > 0 && simState !== 'idle' && (
-                  <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: 'var(--positive)', background: 'rgba(34,197,94,0.1)' }}>LIVE DATA</span>
+                {simBars.length > 0 && simState !== 'idle' && !aiDriven && (
+                  <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: 'var(--positive)', background: 'rgba(34,197,94,0.1)' }}>REAL DATA</span>
                 )}
-                {predictionLine && (
+                {aiDriven && prediction && simState !== 'idle' && (
+                  <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: predLineColor, background: `${predLineColor}20`, border: `1px solid ${predLineColor}40` }}>
+                    AI — {prediction.direction.toUpperCase()} {prediction.confidence}%
+                  </span>
+                )}
+                {predictionLine && !aiDriven && (
                   <span style={{ fontSize: '0.68rem', padding: '2px 8px', borderRadius: 5, fontWeight: 700, color: predLineColor, background: `${predLineColor}20`, border: `1px solid ${predLineColor}40` }}>
                     AI PROJECTION — {prediction?.direction?.toUpperCase()} {prediction?.confidence}%
                   </span>
