@@ -48,6 +48,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
   const predLineSeriesRef = useRef<any>(null);
   const isDemoRef = useRef(false);
   const fetchingRef = useRef(false);
+  const hasExternalBarsRef = useRef(!!externalBars && externalBars.length > 0);
 
   function applyBarsToChart(chart: IChartApi, bars: Bar[]) {
     if (type === 'candle') {
@@ -113,7 +114,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
 
     // Lazy-load more history when user scrolls left past the first 10 bars
     chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-      if (!range || fetchingRef.current || isDemoRef.current) return;
+      if (!range || fetchingRef.current || isDemoRef.current || hasExternalBarsRef.current) return;
       if (range.from < 10) {
         setLoadedDays(prev => prev + 365);
       }
@@ -207,6 +208,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
 
   // Update chart data when externally provided bars change (simulation playback)
   useEffect(() => {
+    hasExternalBarsRef.current = !!externalBars && externalBars.length > 0;
     if (!externalBars || externalBars.length === 0 || !seriesRef.current || !chartRef.current) return;
     barsRef.current = externalBars;
     const mapped = externalBars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close }));
