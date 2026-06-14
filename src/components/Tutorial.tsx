@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   X, ChevronRight, ChevronLeft,
   LayoutDashboard, TrendingUp, Briefcase, Clock,
-  Trophy, Star, Newspaper, Zap, type LucideIcon,
+  Star, Newspaper, Zap, type LucideIcon,
 } from 'lucide-react';
 
 interface Step {
@@ -31,7 +31,7 @@ const STEPS: Step[] = [
       'Live stock prices powered by Alpaca API',
       'Real historical data for backtesting strategies',
       'AI-powered predictions via OpenRouter',
-      'Compete on the global leaderboard',
+      'Track your portfolio and watchlist in real time',
     ],
     tip: 'This is your Dashboard — your home base for everything.',
   },
@@ -39,7 +39,7 @@ const STEPS: Step[] = [
     nav: '/markets',
     Icon: TrendingUp,
     color: '#0DBF76',
-    label: 'Step 1 of 6',
+    label: 'Step 1 of 5',
     title: 'Markets',
     description: 'Browse all available stocks, ETFs, and crypto. Filter by sector, sort by performance, and click any ticker to open its detail page.',
     features: [
@@ -53,7 +53,7 @@ const STEPS: Step[] = [
     nav: '/portfolio',
     Icon: Briefcase,
     color: '#F59E0B',
-    label: 'Step 2 of 6',
+    label: 'Step 2 of 5',
     title: 'Portfolio',
     description: 'Track all your open positions, cash balance, and total P&L. See exactly how every holding is performing in real time.',
     features: [
@@ -67,7 +67,7 @@ const STEPS: Step[] = [
     nav: '/simulation',
     Icon: Clock,
     color: '#8B5CF6',
-    label: 'Step 3 of 6',
+    label: 'Step 3 of 5',
     title: 'Simulation Mode',
     description: 'Pick any date range and trade with real historical prices. The chart draws bar-by-bar as the simulation plays — like watching market history unfold.',
     features: [
@@ -82,7 +82,7 @@ const STEPS: Step[] = [
     nav: '/watchlist',
     Icon: Star,
     color: '#F59E0B',
-    label: 'Step 4 of 6',
+    label: 'Step 4 of 5',
     title: 'Watchlist',
     description: 'Star any stock from its detail page to save it here. Keep an eye on the tickers you care about without searching every time.',
     features: [
@@ -96,7 +96,7 @@ const STEPS: Step[] = [
     nav: '/news',
     Icon: Newspaper,
     color: '#06B6D4',
-    label: 'Step 5 of 6',
+    label: 'Step 5 of 5',
     title: 'News & Sentiment',
     description: 'Stay up to date with live market news. Sentiment labels highlight bullish and bearish signals in the headlines.',
     features: [
@@ -105,20 +105,6 @@ const STEPS: Step[] = [
       'Links through to full articles',
     ],
     tip: 'Green = bullish signal, Red = bearish signal.',
-  },
-  {
-    nav: '/leaderboard',
-    Icon: Trophy,
-    color: '#F59E0B',
-    label: 'Step 6 of 6',
-    title: 'Leaderboard',
-    description: "You start with $100,000. Trade well, grow your portfolio, and climb the global rankings. Let's see what you can do.",
-    features: [
-      'Global rankings by total portfolio return',
-      'Your position updated in real time',
-      'See the top traders and their returns',
-    ],
-    tip: 'Your rank updates automatically as your portfolio changes.',
   },
 ];
 

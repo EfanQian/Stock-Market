@@ -4,19 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, TrendingUp, Briefcase, Clock,
-  Trophy, Star, Newspaper, Settings, Zap, HelpCircle,
+  Star, Newspaper, Settings, Zap, HelpCircle,
 } from 'lucide-react';
 import { TUTORIAL_KEY } from './Tutorial';
 
 const NAV = [
-  { href: '/',            icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/markets',     icon: TrendingUp,      label: 'Markets'   },
-  { href: '/portfolio',   icon: Briefcase,       label: 'Portfolio' },
-  { href: '/simulation',  icon: Clock,           label: 'Simulation' },
-  { href: '/leaderboard', icon: Trophy,          label: 'Leaderboard' },
-  { href: '/watchlist',   icon: Star,            label: 'Watchlist' },
-  { href: '/news',        icon: Newspaper,       label: 'News'      },
-  { href: '/settings',    icon: Settings,        label: 'Settings'  },
+  { href: '/',           icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/markets',    icon: TrendingUp,      label: 'Markets'   },
+  { href: '/portfolio',  icon: Briefcase,       label: 'Portfolio' },
+  { href: '/simulation', icon: Clock,           label: 'Simulation' },
+  { href: '/watchlist',  icon: Star,            label: 'Watchlist' },
+  { href: '/news',       icon: Newspaper,       label: 'News'      },
+  { href: '/settings',   icon: Settings,        label: 'Settings'  },
 ];
 
 export default function Sidebar() {
