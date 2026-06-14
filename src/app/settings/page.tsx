@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Info, Activity, CheckCircle, XCircle, Loader2, Sun, Moon } from 'lucide-react';
+import { Info, Activity, CheckCircle, XCircle, Loader2, Sun, Moon, RotateCcw, AlertTriangle } from 'lucide-react';
 import { THEME_KEY, applyTheme } from '@/components/ThemeProvider';
+import { resetPortfolio } from '@/lib/store';
 
 type ConnectionStatus = 'checking' | 'connected' | 'demo';
 
@@ -10,11 +11,20 @@ export default function SettingsPage() {
   const [alpacaStatus, setAlpacaStatus] = useState<ConnectionStatus>('checking');
   const [samplePrice, setSamplePrice] = useState<string | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   useEffect(() => {
     const saved = (localStorage.getItem(THEME_KEY) as 'dark' | 'light' | null) ?? 'dark';
     setTheme(saved);
   }, []);
+
+  function handleReset() {
+    resetPortfolio();
+    setConfirmReset(false);
+    setResetDone(true);
+    setTimeout(() => setResetDone(false), 3000);
+  }
 
   function toggleTheme(next: 'dark' | 'light') {
     setTheme(next);
@@ -148,6 +158,45 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Reset Portfolio */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <RotateCcw size={20} color="var(--negative)" />
+          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Reset Portfolio</h2>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          Wipe all positions and trade history, and restore your cash to <strong style={{ color: 'var(--text-primary)' }}>$100,000</strong>. This cannot be undone.
+        </p>
+        {resetDone ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8 }}>
+            <CheckCircle size={16} color="var(--positive)" />
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--positive)' }}>Portfolio reset — balance restored to $100,000</span>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmReset(true)}
+            style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.08)', color: 'var(--negative)', cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}
+          >
+            Reset to $100,000
+          </button>
+        )}
+      </div>
+
+      {/* Confirm modal */}
+      {confirmReset && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, maxWidth: 400, width: '90%', textAlign: 'center' }}>
+            <AlertTriangle size={40} color="var(--warning)" style={{ display: 'block', margin: '0 auto 16px' }} />
+            <h2 style={{ margin: '0 0 8px', fontSize: '1.2rem' }}>Reset Portfolio?</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 24 }}>This will clear all positions, transactions, and reset your cash to $100,000. This cannot be undone.</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => setConfirmReset(false)} style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+              <button onClick={handleReset} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: 'var(--negative)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Disclaimer */}
       <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: 20 }}>
