@@ -149,17 +149,6 @@ export default function Tutorial() {
 
   return (
     <>
-      {/* Backdrop — only covers left side (not the panel) */}
-      <div
-        onClick={finish}
-        style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0, right: 340,
-          zIndex: 9998,
-          background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(2px)',
-        }}
-      />
-
       {/* Right-side panel */}
       <div
         onClick={e => e.stopPropagation()}
