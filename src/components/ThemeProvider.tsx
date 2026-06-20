@@ -10,6 +10,7 @@ export function applyTheme(theme: 'dark' | 'light') {
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
+  window.dispatchEvent(new Event('theme-changed'));
 }
 
 export default function ThemeProvider() {

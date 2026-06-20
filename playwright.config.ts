@@ -6,7 +6,7 @@ export default defineConfig({
   retries: 0,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3099',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -17,8 +17,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
+    command: 'npx next start --port 3099',
+    url: 'http://localhost:3099',
     reuseExistingServer: true,
     timeout: 60000,
   },

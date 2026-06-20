@@ -5,6 +5,20 @@ import { createChart, type IChartApi, CandlestickSeries, LineSeries, HistogramSe
 
 interface Bar { time: number; open: number; high: number; low: number; close: number; volume: number; }
 
+function isLightTheme() {
+  return typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'light';
+}
+
+function chartColors(light: boolean) {
+  return {
+    textColor:      light ? '#334155' : '#94A3B8',
+    gridColor:      light ? '#CBD5E1' : '#1E293B',
+    borderColor:    light ? '#CBD5E1' : '#1E293B',
+    crosshairColor: light ? '#94A3B8' : '#475569',
+    labelBg:        light ? '#0AA865' : '#0DBF76',
+  };
+}
+
 function generateBars(basePrice: number, days: number, isUp: boolean): Bar[] {
   const bars: Bar[] = [];
   const now = Math.floor(Date.now() / 1000);
@@ -42,6 +56,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
   const [loading, setLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState<{ date: string; ohlcv: string } | null>(null);
   const [loadedDays, setLoadedDays] = useState(days);
+  const [light, setLight] = useState(false);
   const barsRef = useRef<Bar[]>([]);
   const seriesRef = useRef<any>(null);
   const volSeriesRef = useRef<any>(null);
@@ -49,6 +64,30 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
   const isDemoRef = useRef(false);
   const fetchingRef = useRef(false);
   const hasExternalBarsRef = useRef(!!externalBars && externalBars.length > 0);
+
+  // Sync light state and listen for theme changes
+  useEffect(() => {
+    setLight(isLightTheme());
+    const handler = () => setLight(isLightTheme());
+    window.addEventListener('theme-changed', handler);
+    return () => window.removeEventListener('theme-changed', handler);
+  }, []);
+
+  // Apply chart color options when theme flips without remounting
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const c = chartColors(light);
+    chartRef.current.applyOptions({
+      layout: { textColor: c.textColor },
+      grid: { vertLines: { color: c.gridColor }, horzLines: { color: c.gridColor } },
+      crosshair: {
+        vertLine: { color: c.crosshairColor, labelBackgroundColor: c.labelBg },
+        horzLine: { color: c.crosshairColor, labelBackgroundColor: c.labelBg },
+      },
+      rightPriceScale: { borderColor: c.borderColor },
+      timeScale: { borderColor: c.borderColor },
+    });
+  }, [light]);
 
   function applyBarsToChart(chart: IChartApi, bars: Bar[]) {
     if (type === 'candle') {
@@ -80,24 +119,24 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     if (!containerRef.current) return;
     let cancelled = false;
     const container = containerRef.current;
+    const c = chartColors(isLightTheme());
 
     const chart = createChart(container, {
-      layout: { background: { color: 'transparent' }, textColor: '#94A3B8' },
-      grid: { vertLines: { color: '#1E293B' }, horzLines: { color: '#1E293B' } },
+      layout: { background: { color: 'transparent' }, textColor: c.textColor },
+      grid: { vertLines: { color: c.gridColor }, horzLines: { color: c.gridColor } },
       crosshair: {
         mode: 1,
-        vertLine: { color: '#475569', labelBackgroundColor: '#0DBF76' },
-        horzLine: { color: '#475569', labelBackgroundColor: '#0DBF76' },
+        vertLine: { color: c.crosshairColor, labelBackgroundColor: c.labelBg },
+        horzLine: { color: c.crosshairColor, labelBackgroundColor: c.labelBg },
       },
-      rightPriceScale: { borderColor: '#1E293B', scaleMargins: { top: 0.1, bottom: 0.2 } },
-      timeScale: { borderColor: '#1E293B', timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: c.borderColor, scaleMargins: { top: 0.1, bottom: 0.2 } },
+      timeScale: { borderColor: c.borderColor, timeVisible: true, secondsVisible: false },
       width: container.clientWidth,
       height: container.clientHeight,
     });
 
     chartRef.current = chart;
 
-    // Crosshair move → show date + OHLCV overlay
     chart.subscribeCrosshairMove(param => {
       if (!param.time || !param.seriesData.size) { setHoverInfo(null); return; }
       const ts = param.time as number;
@@ -112,12 +151,9 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
       setHoverInfo({ date: dateStr, ohlcv });
     });
 
-    // Lazy-load more history when user scrolls left past the first 10 bars
     chart.timeScale().subscribeVisibleLogicalRangeChange(range => {
       if (!range || fetchingRef.current || isDemoRef.current || hasExternalBarsRef.current) return;
-      if (range.from < 10) {
-        setLoadedDays(prev => prev + 365);
-      }
+      if (range.from < 10) setLoadedDays(prev => prev + 365);
     });
 
     async function loadData(numDays: number) {
@@ -128,7 +164,7 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
         const json = await res.json() as { bars: Bar[]; demo?: boolean };
         if (json.bars && json.bars.length > 0) { bars = json.bars; isDemoRef.current = !!json.demo; }
       } catch { /* fall through */ }
-      if (cancelled) return; // chart was removed while fetch was in-flight
+      if (cancelled) return;
       if (bars.length === 0) { bars = generateBars(basePrice, numDays, isUp); isDemoRef.current = true; }
       barsRef.current = bars;
       applyBarsToChart(chart, bars);
@@ -161,11 +197,9 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     };
   }, [symbol, type]); // basePrice/isUp intentionally excluded — live price updates must not recreate the chart
 
-  // When loadedDays increases (scroll left triggered), fetch extended history
   useEffect(() => {
     if (!chartRef.current || loadedDays === days || fetchingRef.current) return;
     fetchingRef.current = true;
-
     async function extendHistory() {
       let bars: Bar[] = [];
       try {
@@ -181,43 +215,30 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
     extendHistory();
   }, [loadedDays]);
 
-  // Add / update / remove the AI prediction projection line
   useEffect(() => {
     if (!chartRef.current) return;
-
     if (predLineSeriesRef.current) {
-      try { chartRef.current.removeSeries(predLineSeriesRef.current); } catch { /* chart may have been rebuilt */ }
+      try { chartRef.current.removeSeries(predLineSeriesRef.current); } catch { /* ok */ }
       predLineSeriesRef.current = null;
     }
-
     if (!predictionLine || predictionLine.length < 2) return;
-
     const color = predictionColor ?? '#8B5CF6';
     predLineSeriesRef.current = chartRef.current.addSeries(LineSeries, {
-      color,
-      lineWidth: 2,
-      lineStyle: 2, // dashed
-      crosshairMarkerVisible: false,
-      lastValueVisible: true,
-      priceLineVisible: false,
+      color, lineWidth: 2, lineStyle: 2,
+      crosshairMarkerVisible: false, lastValueVisible: true, priceLineVisible: false,
     });
-    predLineSeriesRef.current.setData(
-      predictionLine.map(p => ({ time: p.time as UTCTimestamp, value: p.value }))
-    );
+    predLineSeriesRef.current.setData(predictionLine.map(p => ({ time: p.time as UTCTimestamp, value: p.value })));
   }, [predictionLine, predictionColor]);
 
-  // Update chart data when externally provided bars change (simulation playback)
   useEffect(() => {
     hasExternalBarsRef.current = !!externalBars && externalBars.length > 0;
     if (!externalBars || externalBars.length === 0 || !seriesRef.current || !chartRef.current) return;
     barsRef.current = externalBars;
-    const mapped = externalBars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close }));
-    seriesRef.current.setData(mapped);
+    seriesRef.current.setData(externalBars.map(b => ({ time: b.time as UTCTimestamp, open: b.open, high: b.high, low: b.low, close: b.close })));
     volSeriesRef.current?.setData(externalBars.map(b => ({
       time: b.time as UTCTimestamp, value: b.volume,
       color: b.close >= b.open ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)',
     })));
-    // Keep the latest bar in view
     chartRef.current.timeScale().scrollToPosition(0, false);
   }, [externalBars]);
 
@@ -230,12 +251,12 @@ export default function StockChart({ symbol, basePrice, isUp, type = 'candle', d
         </div>
       )}
 
-      {/* Google Finance-style OHLCV + date overlay on crosshair hover */}
       {hoverInfo && (
         <div style={{
           position: 'absolute', top: 8, left: 12, zIndex: 10, pointerEvents: 'none',
-          background: 'rgba(11,17,32,0.88)', backdropFilter: 'blur(6px)',
+          background: 'var(--bg-card)', backdropFilter: 'blur(6px)',
           border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
         }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
             {hoverInfo.date}
