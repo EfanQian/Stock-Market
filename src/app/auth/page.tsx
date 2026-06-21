@@ -60,13 +60,16 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase!.auth.signUp({ email, password });
-        if (error) throw error;
-        if (data.session) {
-          router.push('/');
-        } else {
-          setSuccess('Account created! Check your email to confirm your account, then sign in.');
-        }
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error);
+        const { error: signInError } = await supabase!.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        router.push('/');
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
