@@ -6,6 +6,7 @@ import TickerTape from '@/components/TickerTape';
 import Tutorial from '@/components/Tutorial';
 import ThemeProvider from '@/components/ThemeProvider';
 import { AuthProvider } from '@/context/AuthContext';
+import WelcomeGate from '@/components/WelcomeGate';
 
 export const metadata: Metadata = {
   title: 'MarketSim Pro — Trade Like a Pro. Risk Nothing.',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body style={{ margin: 0, minHeight: '100vh', display: 'flex' }}>
         <AuthProvider>
+        <WelcomeGate />
         <ThemeProvider />
         <Tutorial />
         <Sidebar />

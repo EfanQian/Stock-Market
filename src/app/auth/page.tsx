@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { TrendingUp, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function AuthPage() {
@@ -13,6 +14,11 @@ export default function AuthPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) router.replace('/');
+  }, [user, router]);
 
   if (!supabase) {
     return (
@@ -54,9 +60,13 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        const { error } = await supabase!.auth.signUp({ email, password });
+        const { data, error } = await supabase!.auth.signUp({ email, password });
         if (error) throw error;
-        setSuccess('Account created! Check your email to confirm, then sign in.');
+        if (data.session) {
+          router.push('/');
+        } else {
+          setSuccess('Account created! Check your email to confirm your account, then sign in.');
+        }
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
