@@ -47,7 +47,7 @@ export interface PortfolioState {
   achievements: string[];
 }
 
-const DEFAULT_STATE: PortfolioState = {
+export const DEFAULT_STATE: PortfolioState = {
   cash: 100000,
   positions: {},
   orders: [],
@@ -73,6 +73,22 @@ export function loadPortfolio(): PortfolioState {
 export function savePortfolio(state: PortfolioState): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event('portfolio-updated'));
+  void syncToCloud(state);
+}
+
+async function syncToCloud(state: PortfolioState): Promise<void> {
+  try {
+    const { supabase } = await import('./supabase');
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('portfolios').upsert({
+      user_id: user.id,
+      data: state,
+      updated_at: new Date().toISOString(),
+    });
+  } catch { /* offline — ignore */ }
 }
 
 export function resetPortfolio(): PortfolioState {

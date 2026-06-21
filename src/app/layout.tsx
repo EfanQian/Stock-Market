@@ -5,6 +5,7 @@ import Topbar from '@/components/Topbar';
 import TickerTape from '@/components/TickerTape';
 import Tutorial from '@/components/Tutorial';
 import ThemeProvider from '@/components/ThemeProvider';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'MarketSim Pro — Trade Like a Pro. Risk Nothing.',
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body style={{ margin: 0, minHeight: '100vh', display: 'flex' }}>
+        <AuthProvider>
         <ThemeProvider />
         <Tutorial />
         <Sidebar />
@@ -33,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             MarketSim Pro is a simulation platform for educational purposes only. No real trades are executed. Not financial advice.
           </footer>
         </div>
+        </AuthProvider>
       </body>
     </html>
   );

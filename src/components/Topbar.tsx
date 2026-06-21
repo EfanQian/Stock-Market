@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Bell } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Bell, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DEMO_STOCKS, formatCash, formatPct } from '@/lib/finnhub';
 import { loadPortfolio, getTotalValue, getTotalReturnPct } from '@/lib/store';
 import { usePrices } from '@/lib/usePrices';
+import { useAuth } from '@/context/AuthContext';
 
 function useMarketStatus() {
   const [status, setStatus] = useState<{ open: boolean; label: string }>({ open: false, label: '' });
@@ -50,9 +51,12 @@ export default function Topbar() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<typeof DEMO_STOCKS>([]);
   const [portfolio, setPortfolio] = useState<ReturnType<typeof loadPortfolio> | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const market = useMarketStatus();
   const livePrices = usePrices(DEMO_STOCKS.map(s => s.symbol));
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     setPortfolio(loadPortfolio());
@@ -60,6 +64,17 @@ export default function Topbar() {
     window.addEventListener('portfolio-updated', refresh);
     return () => window.removeEventListener('portfolio-updated', refresh);
   }, []);
+
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showUserMenu]);
 
   // Update portfolio current prices when live data arrives
   useEffect(() => {
@@ -170,15 +185,71 @@ export default function Topbar() {
         <Bell size={18} />
       </button>
 
-      {/* Avatar */}
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%',
-        background: 'linear-gradient(135deg, var(--brand), var(--violet))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.75rem', fontWeight: 700, color: '#000', cursor: 'pointer',
-      }}>
-        U
-      </div>
+      {/* User avatar / Sign In */}
+      {user ? (
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowUserMenu(v => !v)}
+            title={user.email}
+            style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--brand), var(--violet))',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.75rem', fontWeight: 700, color: '#000',
+            }}
+          >
+            {user.email?.[0]?.toUpperCase() ?? 'U'}
+          </button>
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+              background: 'var(--bg-card)', border: '1px solid var(--border)',
+              borderRadius: 12, padding: 12, minWidth: 220, zIndex: 200,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--brand), var(--violet))',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', fontWeight: 700, color: '#000', flexShrink: 0,
+                }}>
+                  {user.email?.[0]?.toUpperCase() ?? 'U'}
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.email}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--positive)', fontWeight: 600 }}>● Synced</div>
+                </div>
+              </div>
+              <button
+                onClick={async () => { await signOut(); setShowUserMenu(false); }}
+                style={{
+                  width: '100%', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                  borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+                }}
+              >
+                <LogOut size={14} />
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => router.push('/auth')}
+          style={{
+            padding: '6px 14px', background: 'var(--brand)',
+            border: 'none', borderRadius: 8, cursor: 'pointer',
+            color: '#000', fontWeight: 700, fontSize: '0.78rem', whiteSpace: 'nowrap',
+          }}
+        >
+          Sign In
+        </button>
+      )}
     </header>
   );
 }

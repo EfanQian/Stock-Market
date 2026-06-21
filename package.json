@@ -12,6 +12,7 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.3.0",
     "lightweight-charts": "^5.2.0",
