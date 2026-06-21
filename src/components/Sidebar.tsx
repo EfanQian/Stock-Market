@@ -90,31 +90,26 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div style={{
-        padding: '12px', borderRadius: 10,
-        background: 'rgba(13,191,118,0.06)',
-        border: '1px solid rgba(13,191,118,0.15)',
-        marginBottom: 8,
-      }}>
-        <div style={{ fontSize: '0.7rem', color: 'var(--brand)', fontWeight: 700, marginBottom: 4 }}>
-          PAPER TRADING
-        </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          No real money. Pure simulation.
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <button
+          onClick={() => { localStorage.removeItem(TUTORIAL_KEY); window.location.reload(); }}
+          style={{
+            width: '100%', background: 'transparent',
+            border: 'none', borderRadius: 8,
+            padding: '7px 10px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 7,
+            color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500,
+            textAlign: 'left',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <HelpCircle size={14} /> Restart Tutorial
+        </button>
+        <div style={{ padding: '4px 10px', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          PAPER TRADING ONLY · NO REAL MONEY
         </div>
       </div>
-      <button
-        onClick={() => { localStorage.removeItem(TUTORIAL_KEY); window.location.reload(); }}
-        style={{
-          width: '100%', background: 'transparent',
-          border: '1px solid var(--border-light)', borderRadius: 8,
-          padding: '7px 10px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 7,
-          color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600,
-        }}
-      >
-        <HelpCircle size={14} /> Restart Tutorial
-      </button>
     </aside>
   );
 }

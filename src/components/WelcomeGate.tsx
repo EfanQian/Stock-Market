@@ -2,29 +2,42 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Zap, Users } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { TrendingUp } from 'lucide-react';
 
-const KEY = 'marketsim_seen_welcome';
+const GUEST_KEY = 'marketsim_guest';
 
 export default function WelcomeGate() {
-  const [show, setShow] = useState(false);
+  const { user, loading } = useAuth();
+  const [isGuest, setIsGuest] = useState(true); // default true prevents flash
   const [visible, setVisible] = useState(false);
   const router = useRouter();
 
+  // Re-read guest flag whenever auth state changes (catches sign-out)
   useEffect(() => {
-    if (!localStorage.getItem(KEY)) {
-      setShow(true);
-      setTimeout(() => setVisible(true), 30);
-    }
-  }, []);
+    setIsGuest(!!localStorage.getItem(GUEST_KEY));
+  }, [user]);
 
-  function dismiss(goto?: string) {
-    localStorage.setItem(KEY, '1');
-    setVisible(false);
-    setTimeout(() => {
-      setShow(false);
-      if (goto) router.push(goto);
-    }, 280);
+  const show = !loading && !user && !isGuest;
+
+  useEffect(() => {
+    if (show) {
+      const t = setTimeout(() => setVisible(true), 40);
+      return () => clearTimeout(t);
+    } else {
+      setVisible(false);
+    }
+  }, [show]);
+
+  function continueAsGuest() {
+    localStorage.setItem(GUEST_KEY, '1');
+    setIsGuest(true);
+  }
+
+  function goToAuth() {
+    localStorage.setItem(GUEST_KEY, '1');
+    setIsGuest(true);
+    router.push('/auth');
   }
 
   if (!show) return null;
@@ -33,104 +46,94 @@ export default function WelcomeGate() {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       background: 'var(--bg-primary)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       opacity: visible ? 1 : 0,
-      transition: 'opacity 0.28s ease',
+      transition: 'opacity 0.25s ease',
     }}>
-      {/* Glow background */}
-      <div style={{
-        position: 'absolute', top: '35%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 700, height: 700, borderRadius: '50%', pointerEvents: 'none',
-        background: 'radial-gradient(circle, rgba(13,191,118,0.07) 0%, transparent 65%)',
-      }} />
+      <div style={{ width: '100%', maxWidth: 420, padding: '0 28px' }}>
 
-      <div style={{ textAlign: 'center', maxWidth: 560, padding: '0 24px', position: 'relative' }}>
-        {/* Logo */}
-        <div style={{
-          width: 76, height: 76, borderRadius: 22, margin: '0 auto 20px',
-          background: 'linear-gradient(135deg, var(--brand), var(--violet))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 48px rgba(13,191,118,0.28)',
-        }}>
-          <TrendingUp size={38} color="#000" />
+        {/* Wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 9,
+            background: 'var(--brand)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <TrendingUp size={19} color="#000" strokeWidth={2.5} />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+            MarketSim Pro
+          </span>
         </div>
 
+        {/* Headline */}
         <h1 style={{
-          fontSize: '2.6rem', fontWeight: 900, color: 'var(--text-primary)',
-          margin: '0 0 6px', letterSpacing: '-0.03em',
+          fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)',
+          margin: '0 0 10px', lineHeight: 1.15, letterSpacing: '-0.03em',
         }}>
-          MarketSim Pro
+          Paper trading.<br />Real market data.
         </h1>
-        <p style={{ fontSize: '1rem', color: 'var(--text-muted)', margin: '0 0 44px' }}>
-          Trade like a pro. Risk nothing.
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0 0 28px', lineHeight: 1.65 }}>
+          Practice with $100,000 in virtual cash. Live prices from Alpaca Markets. No real money.
         </p>
 
-        {/* Choice cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          {/* Guest */}
-          <button
-            onClick={() => dismiss()}
-            style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderRadius: 18, padding: '26px 22px', cursor: 'pointer',
-              textAlign: 'left', transition: 'all 0.18s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-          >
-            <div style={{
-              width: 42, height: 42, borderRadius: 12, marginBottom: 14,
-              background: 'var(--bg-secondary)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Zap size={20} color="var(--brand)" />
+        {/* Feature list */}
+        <div style={{
+          borderTop: '1px solid var(--border)', paddingTop: 20, marginBottom: 28,
+          display: 'flex', flexDirection: 'column', gap: 11,
+        }}>
+          {[
+            'Live prices from Alpaca Markets',
+            'AI-powered trade predictions',
+            'Strategy backtesting with simulation mode',
+            'Portfolio analytics and transaction history',
+          ].map(f => (
+            <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{f}</span>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 6 }}>
-              Guest Mode
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-              Jump in instantly with $100k. Progress saved on this device.
-            </div>
-          </button>
+          ))}
+        </div>
 
-          {/* Create Account */}
+        {/* CTAs */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <button
-            onClick={() => dismiss('/auth')}
+            onClick={goToAuth}
             style={{
-              background: 'linear-gradient(135deg, rgba(13,191,118,0.1), rgba(124,58,237,0.1))',
-              border: '1px solid var(--brand)', borderRadius: 18, padding: '26px 22px',
-              cursor: 'pointer', textAlign: 'left', transition: 'all 0.18s',
+              width: '100%', height: 46, background: 'var(--brand)',
+              border: 'none', borderRadius: 9, color: '#000',
+              fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer',
+              letterSpacing: '-0.01em',
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(13,191,118,0.18)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
           >
-            <div style={{
-              width: 42, height: 42, borderRadius: 12, marginBottom: 14,
-              background: 'linear-gradient(135deg, var(--brand), var(--violet))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Users size={20} color="#000" />
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: 6 }}>
-              Create Account
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.55 }}>
-              Sync your portfolio across devices. Never lose progress.
-            </div>
+            Create a free account
+          </button>
+          <button
+            onClick={continueAsGuest}
+            style={{
+              width: '100%', height: 46, background: 'transparent',
+              border: '1px solid var(--border-light)', borderRadius: 9,
+              color: 'var(--text-muted)', fontWeight: 500,
+              fontSize: '0.875rem', cursor: 'pointer',
+            }}
+          >
+            Continue as guest
           </button>
         </div>
 
-        <p style={{ marginTop: 22, fontSize: '0.73rem', color: 'var(--text-muted)' }}>
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           Already have an account?{' '}
           <button
-            onClick={() => dismiss('/auth')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontSize: '0.73rem', fontWeight: 600, padding: 0 }}
+            onClick={goToAuth}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--brand)', fontSize: '0.75rem', fontWeight: 600, padding: 0,
+            }}
           >
             Sign in →
           </button>
         </p>
+
       </div>
     </div>
   );

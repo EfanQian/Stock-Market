@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     if (!supabase) return;
+    localStorage.removeItem('marketsim_guest');
     await supabase.auth.signOut();
   }
 
