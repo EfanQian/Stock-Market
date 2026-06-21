@@ -5,6 +5,7 @@ import { Play, Pause, Square, Zap, Brain, TrendingUp, TrendingDown, Minus, Loade
 import dynamic from 'next/dynamic';
 import { DEMO_STOCKS, DEMO_PRICES, formatPrice, formatPct, formatCash, getRiskColor, type RiskLevel } from '@/lib/finnhub';
 import { usePrice } from '@/lib/usePrices';
+import { loadPortfolio, executeBuy, executeSell } from '@/lib/store';
 
 const StockChart = dynamic(() => import('@/components/StockChart'), { ssr: false });
 
@@ -112,12 +113,14 @@ export default function SimulationPage() {
     ? simBars[simDay].close
     : basePrice;
 
-  const simReturn = simPortfolio.cash + Object.values(simPortfolio.positions).reduce((s, p) => s + p.shares * simPrice, 0) - 100000;
-  const simReturnPct = (simReturn / 100000) * 100;
+  const simStartCash = useMemo(() => loadPortfolio().cash, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const simReturn = simPortfolio.cash + Object.values(simPortfolio.positions).reduce((s, p) => s + p.shares * simPrice, 0) - simStartCash;
+  const simReturnPct = (simReturn / (simStartCash || 100000)) * 100;
 
   useEffect(() => {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
+
 
   // Restart interval when speed changes while running
   useEffect(() => {
@@ -140,7 +143,8 @@ export default function SimulationPage() {
   const startSim = async () => {
     setSimState('loading');
     setSimDay(0);
-    setSimPortfolio({ cash: 100000, positions: {} });
+    const real = loadPortfolio();
+    setSimPortfolio({ cash: real.cash, positions: {} });
     setSimBars([]);
     setPredictionLine(null);
     setPrediction(null);
@@ -233,6 +237,7 @@ export default function SimulationPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
+
   function buildPredictionLine(pred: Prediction, bars: Bar[], day: number, h: typeof horizon) {
     if (bars.length === 0 || day >= bars.length) return;
     const horizonBars = h === '1_day' ? 1 : h === '1_week' ? 5 : 21;
@@ -253,11 +258,13 @@ export default function SimulationPage() {
   const handleSimTrade = (side: 'buy' | 'sell') => {
     const sh = parseFloat(simShares);
     if (!sh || sh <= 0) return;
+    const info = DEMO_STOCKS.find(s => s.symbol === selectedSym);
     if (side === 'buy') {
       const cost = sh * simPrice;
       if (cost > simPortfolio.cash) { setToast('Insufficient cash'); setTimeout(() => setToast(''), 2000); return; }
       const pos = simPortfolio.positions[selectedSym];
       setSimPortfolio(p => ({ ...p, cash: p.cash - cost, positions: { ...p.positions, [selectedSym]: { shares: (pos?.shares ?? 0) + sh, avgCost: pos ? (pos.shares * pos.avgCost + cost) / (pos.shares + sh) : simPrice } } }));
+      executeBuy(loadPortfolio(), selectedSym, info?.name ?? selectedSym, sh, simPrice, info?.sector ?? 'Unknown');
     } else {
       const pos = simPortfolio.positions[selectedSym];
       if (!pos || pos.shares < sh) { setToast('Insufficient shares'); setTimeout(() => setToast(''), 2000); return; }
@@ -265,6 +272,7 @@ export default function SimulationPage() {
       const newPos = { ...simPortfolio.positions };
       if (newShares === 0) delete newPos[selectedSym]; else newPos[selectedSym] = { ...pos, shares: newShares };
       setSimPortfolio(p => ({ ...p, cash: p.cash + sh * simPrice, positions: newPos }));
+      executeSell(loadPortfolio(), selectedSym, sh, simPrice);
     }
     setSimShares('');
   };
@@ -317,7 +325,7 @@ export default function SimulationPage() {
         </p>
       </div>
 
-      {toast && <div style={{ position: 'fixed', top: 80, right: 24, background: 'var(--negative-bg)', border: '1px solid var(--negative)', borderRadius: 9, padding: '10px 16px', color: 'var(--negative)', fontWeight: 600, fontSize: '0.875rem', zIndex: 100 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 80, right: 24, background: toast === 'Portfolio updated!' ? 'rgba(34,197,94,0.1)' : 'var(--negative-bg)', border: `1px solid ${toast === 'Portfolio updated!' ? 'rgba(34,197,94,0.3)' : 'var(--negative)'}`, borderRadius: 9, padding: '10px 16px', color: toast === 'Portfolio updated!' ? 'var(--positive)' : 'var(--negative)', fontWeight: 600, fontSize: '0.875rem', zIndex: 100 }}>{toast}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
         <div>
@@ -442,7 +450,7 @@ export default function SimulationPage() {
               <h2 style={{ margin: '0 0 16px', fontSize: '1.1rem', fontWeight: 800 }}>Simulation Complete!</h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
                 {[
-                  { label: 'Final Value', value: formatCash(100000 + simReturn) },
+                  { label: 'Final Value', value: formatCash(simStartCash + simReturn) },
                   { label: 'Total Return', value: `${simReturnPct >= 0 ? '+' : ''}${simReturnPct.toFixed(2)}%`, color: simReturn >= 0 ? 'var(--positive)' : 'var(--negative)' },
                   { label: 'Period', value: `${startDate} → ${endDate}`, color: 'var(--text-secondary)' },
                 ].map(s => (
